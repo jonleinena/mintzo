@@ -1,31 +1,35 @@
-import { StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
-
-export default function TabOneScreen() {
+export default function HomeScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-1 p-md">
+        <Text className="text-2xl font-bold text-text-primary mb-md">
+          Welcome to Mintzo
+        </Text>
+        <Text className="text-text-secondary">
+          Your Cambridge Speaking Exam practice companion
+        </Text>
+
+        {/* Practice Plan Section - Placeholder */}
+        <View className="mt-lg p-md bg-surface rounded-lg">
+          <Text className="text-lg font-semibold text-text-primary mb-sm">
+            Your Practice Plan
+          </Text>
+          <Text className="text-text-muted">
+            Set up your exam date to get started
+          </Text>
+        </View>
+
+        {/* Today's Goals Section - Placeholder */}
+        <View className="mt-md p-md bg-surface rounded-lg">
+          <Text className="text-lg font-semibold text-text-primary mb-sm">
+            Today&apos;s Goals
+          </Text>
+          <Text className="text-text-muted">0/45 minutes completed</Text>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
