@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import { supabase } from '../supabase/client';
 
 const FUNCTIONS_URL = process.env.EXPO_PUBLIC_SUPABASE_URL + '/functions/v1';
@@ -25,12 +25,10 @@ export async function textToSpeech(text: string): Promise<string> {
 
   const { audio } = await response.json();
 
-  const audioPath = `${FileSystem.cacheDirectory}tts_${Date.now()}.mp3`;
-  await FileSystem.writeAsStringAsync(audioPath, audio, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
+  const file = new File(Paths.cache, `tts_${Date.now()}.mp3`);
+  file.write(audio, { encoding: 'base64' });
 
-  return audioPath;
+  return file.uri;
 }
 
 export async function speechToText(audioUri: string): Promise<{ text: string; words?: Array<{ word: string; start: number; end: number; confidence: number }> }> {

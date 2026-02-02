@@ -8,6 +8,7 @@ import { supabase } from "@/services/supabase/client";
 import { useAuthStore } from "@/stores/authStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import type { Session } from "@supabase/supabase-js";
+import { ElevenLabsProvider } from "@elevenlabs/react-native";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -135,15 +136,17 @@ export default function RootLayout() {
   useProtectedRoute(session, isLoading);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(onboarding)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="exam" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </QueryClientProvider>
+    <ElevenLabsProvider>
+      <QueryClientProvider client={queryClient}>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(onboarding)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="exam" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </QueryClientProvider>
+    </ElevenLabsProvider>
   );
 }

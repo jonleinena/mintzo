@@ -67,7 +67,13 @@ export default function ExamPartScreen() {
 
   const handleStart = () => {
     const sessionId = Date.now().toString();
-    router.push(`/exam/session/${sessionId}`);
+    router.push({
+      pathname: `/exam/session/${sessionId}` as any,
+      params: {
+        level: level ? String(level).toUpperCase() : "B2",
+        part: part ?? "part1",
+      },
+    });
   };
 
   return (

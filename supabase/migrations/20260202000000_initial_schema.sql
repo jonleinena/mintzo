@@ -155,6 +155,7 @@ CREATE TABLE exam_questions (
     question_text TEXT NOT NULL,
     follow_up_questions TEXT[],
     difficulty INTEGER DEFAULT 2 CHECK (difficulty BETWEEN 1 AND 3),
+    audio_url TEXT,
     usage_count INTEGER DEFAULT 0,
     average_response_score DECIMAL(2,1),
     is_active BOOLEAN DEFAULT true,
@@ -170,6 +171,7 @@ CREATE TABLE exam_part2_content (
     follow_up_question TEXT NOT NULL,
     comparison_points TEXT[],
     difficulty INTEGER DEFAULT 2,
+    audio_url TEXT,
     usage_count INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW()
