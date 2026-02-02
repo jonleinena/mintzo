@@ -158,27 +158,30 @@ export default function HomeScreen() {
             <ExamCountdown examDate={targetExamDate} />
           </View>
           <View
-            className="bg-white border-2 border-black rounded-lg px-5 py-4 items-center justify-center"
+            className="bg-white border-2 border-black rounded-lg px-3 py-2 items-center justify-between"
             style={{
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 1,
               shadowRadius: 0,
               elevation: 4,
-              minHeight: 124,
+              height: 124,
             }}
           >
+            <Text className="text-[11px] text-slate-500 font-medium">
+              Weekly goal
+            </Text>
             <ProgressRing
               progress={weeklyGoalProgress}
-              size={80}
-              strokeWidth={8}
-              label="Weekly goal"
-              valueLabel={
-                weeklyProgress.isLoading
-                  ? "Loading..."
-                  : `${weeklyProgress.daysPracticed} / ${weeklyProgress.goalDays} days`
-              }
+              size={64}
+              strokeWidth={6}
+              label={null}
             />
+            <Text className="text-[10px] text-slate-500">
+              {weeklyProgress.isLoading
+                ? "Loading..."
+                : `${weeklyProgress.daysPracticed} / ${weeklyProgress.goalDays} days`}
+            </Text>
           </View>
         </View>
 

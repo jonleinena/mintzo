@@ -7,6 +7,7 @@ type ProgressRingProps = {
   strokeWidth?: number;
   color?: string;
   label?: string;
+  labelPosition?: "top" | "bottom";
   valueLabel?: string;
 };
 
@@ -16,6 +17,7 @@ export function ProgressRing({
   strokeWidth = 10,
   color = "#7C3AED",
   label = "Weekly goal",
+  labelPosition = "bottom",
   valueLabel,
 }: ProgressRingProps) {
   const clamped = Math.min(1, Math.max(0, progress));
@@ -23,8 +25,13 @@ export function ProgressRing({
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - clamped);
 
+  const showLabel = label !== undefined && label !== null;
+
   return (
     <View className="items-center">
+      {showLabel && labelPosition === "top" && (
+        <Text className="text-xs text-slate-500 mb-2">{label}</Text>
+      )}
       <View className="items-center justify-center" style={{ width: size, height: size }}>
         <Svg width={size} height={size}>
           <Circle
@@ -58,7 +65,9 @@ export function ProgressRing({
           )}
         </View>
       </View>
-      <Text className="text-xs text-slate-500 mt-2">{label}</Text>
+      {showLabel && labelPosition === "bottom" && (
+        <Text className="text-xs text-slate-500 mt-2">{label}</Text>
+      )}
     </View>
   );
 }
