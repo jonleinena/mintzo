@@ -38,6 +38,7 @@ export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { setUser, setLoading } = useAuthStore();
+  const { setSettingsFromProfile, resetSettings } = useSettingsStore();
 
   useEffect(() => {
     // Get initial session
@@ -70,6 +71,12 @@ export default function RootLayout() {
                 createdAt: new Date(profile.created_at),
                 updatedAt: new Date(profile.updated_at),
               });
+              setSettingsFromProfile({
+                targetExamLevel: profile.target_exam_level || "B2",
+                targetExamDate: profile.target_exam_date ?? null,
+                dailyPracticeGoal: profile.daily_practice_goal || 45,
+                onboardingComplete: profile.onboarding_complete ?? false,
+              });
             }
           });
       }
@@ -85,7 +92,41 @@ export default function RootLayout() {
       setSession(session);
       if (!session) {
         setUser(null);
+        resetSettings();
+        return;
       }
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (!profile) return;
+          setUser({
+            id: profile.id,
+            email: session.user.email,
+            displayName: profile.display_name,
+            avatarUrl: profile.avatar_url,
+            authType: profile.auth_type || "email",
+            academyId: profile.academy_id,
+            academyGroupId: profile.academy_group_id,
+            onboardingComplete: profile.onboarding_complete,
+            hasUsedFreeTrial: profile.has_used_free_trial,
+            targetExamLevel: profile.target_exam_level || "B2",
+            targetExamDate: profile.target_exam_date
+              ? new Date(profile.target_exam_date)
+              : new Date(),
+            dailyPracticeGoal: profile.daily_practice_goal || 45,
+            createdAt: new Date(profile.created_at),
+            updatedAt: new Date(profile.updated_at),
+          });
+          setSettingsFromProfile({
+            targetExamLevel: profile.target_exam_level || "B2",
+            targetExamDate: profile.target_exam_date ?? null,
+            dailyPracticeGoal: profile.daily_practice_goal || 45,
+            onboardingComplete: profile.onboarding_complete ?? false,
+          });
+        });
     });
 
     return () => subscription.unsubscribe();
