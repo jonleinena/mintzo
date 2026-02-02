@@ -1,59 +1,108 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import "../global.css";
+import { useEffect, useState } from "react";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import * as SplashScreen from "expo-splash-screen";
+import { supabase } from "@/services/supabase/client";
+import { useAuthStore } from "@/stores/authStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import type { Session } from "@supabase/supabase-js";
 
-import { useColorScheme } from '@/components/useColorScheme';
+export { ErrorBoundary } from "expo-router";
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
+const queryClient = new QueryClient();
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+function useProtectedRoute(session: Session | null, isLoading: boolean) {
+  const segments = useSegments();
+  const router = useRouter();
+  const { onboardingComplete } = useSettingsStore();
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+    const inOnboarding = segments[0] === "(onboarding)";
+
+    if (!onboardingComplete && !inOnboarding) {
+      router.replace("/(onboarding)/welcome");
+    } else if (onboardingComplete && inOnboarding) {
+      router.replace("/(tabs)");
     }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
+  }, [session, isLoading, segments, onboardingComplete]);
 }
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { setUser, setLoading } = useAuthStore();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        // Fetch profile and set user
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            if (profile) {
+              setUser({
+                id: profile.id,
+                email: session.user.email,
+                displayName: profile.display_name,
+                avatarUrl: profile.avatar_url,
+                authType: profile.auth_type || "email",
+                academyId: profile.academy_id,
+                academyGroupId: profile.academy_group_id,
+                onboardingComplete: profile.onboarding_complete,
+                hasUsedFreeTrial: profile.has_used_free_trial,
+                targetExamLevel: profile.target_exam_level || "B2",
+                targetExamDate: profile.target_exam_date
+                  ? new Date(profile.target_exam_date)
+                  : new Date(),
+                dailyPracticeGoal: profile.daily_practice_goal || 45,
+                createdAt: new Date(profile.created_at),
+                updatedAt: new Date(profile.updated_at),
+              });
+            }
+          });
+      }
+      setLoading(false);
+      setIsLoading(false);
+      SplashScreen.hideAsync();
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (!session) {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useProtectedRoute(session, isLoading);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+    <QueryClientProvider client={queryClient}>
+      <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="exam" />
+        <Stack.Screen name="+not-found" />
       </Stack>
-    </ThemeProvider>
+    </QueryClientProvider>
   );
 }

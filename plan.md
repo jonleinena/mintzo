@@ -552,7 +552,7 @@ This section provides the complete implementation guide for the **hybrid voice a
 **References:**
 - [ElevenLabs Expo React Native Integration](https://elevenlabs.io/docs/agents-platform/guides/integrations/expo-react-native)
 - [ElevenLabs TTS API](https://elevenlabs.io/docs/api-reference/text-to-speech/convert)
-- [LiveKit Voice AI Quickstart](https://docs.livekit.io/agents/start/voice-ai-quickstart/)
+- [ElevenLabs Agents SDK React Native Expo](https://elevenlabs.io/docs/agents-platform/libraries/react-native) -> VERY IMPORTANT TO USE AND CONSULT
 
 #### 4.4.1 Dependencies Installation
 
@@ -636,98 +636,52 @@ EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=<android_key>
 
 This approach is **~85% cheaper** than Conversational AI and has **no concurrency limits**.
 
-#### 4.5.1 ElevenLabs TTS Service
+**Lazy Audio Caching Strategy (for recycled questions):**
+Questions are drawn from a finite, recycled pool in Supabase (randomized per session). The same question text will appear repeatedly across users/sessions. To eliminate repeat TTS API calls:
+- Check if `audio_url` exists in the question record.
+- If yes: Play from Supabase Storage URL (direct or downloaded to cache).
+- If no: Generate TTS on-demand, play, then upload to Supabase via secure Edge Function for future reuse.
+- Result: First-use pays tiny TTS cost; all subsequent plays are free (just negligible storage/egress).
+
+This builds the cache organically—no upfront batch generation needed. Popular/frequent questions cache first.
+
+**ElevenLabs TTS Service** (updated with caching awareness):
 
 ```typescript
 // src/features/voice/services/elevenlabsTTS.ts
-import axios from 'axios';
-import * as FileSystem from 'expo-file-system';
-import { Audio } from 'expo-av';
+// ... (keep existing textToSpeech and playAudio functions unchanged)
 
-const ELEVENLABS_API_KEY = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY;
-const VOICE_ID = process.env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID;
-const API_BASE = 'https://api.elevenlabs.io/v1';
+// New helper: Upload generated audio to Supabase (called after playback)
+export async function uploadToCache(questionId: string, level: ExamLevel, part: ExamPart, localAudioPath: string): Promise<string | null> {
+  try {
+    const base64Audio = await FileSystem.readAsStringAsync(localAudioPath, { encoding: FileSystem.EncodingType.Base64 });
 
-interface TTSOptions {
-  text: string;
-  voiceId?: string;
-  modelId?: string;
-  stability?: number;
-  similarityBoost?: number;
-}
-
-export async function textToSpeech(options: TTSOptions): Promise<string> {
-  const {
-    text,
-    voiceId = VOICE_ID,
-    modelId = 'eleven_multilingual_v2',
-    stability = 0.5,
-    similarityBoost = 0.75,
-  } = options;
-
-  const response = await axios.post(
-    `${API_BASE}/text-to-speech/${voiceId}`,
-    {
-      text,
-      model_id: modelId,
-      voice_settings: {
-        stability,
-        similarity_boost: similarityBoost,
+    const { data, error } = await supabase.functions.invoke('generate-and-cache-audio', {
+      body: {
+        questionId,
+        level,
+        part,
+        audioBase64: base64Audio,
       },
-    },
-    {
-      headers: {
-        'xi-api-key': ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      responseType: 'arraybuffer',
-    }
-  );
-
-  // Save to local file
-  const audioPath = `${FileSystem.cacheDirectory}tts_${Date.now()}.mp3`;
-  await FileSystem.writeAsStringAsync(
-    audioPath,
-    Buffer.from(response.data).toString('base64'),
-    { encoding: FileSystem.EncodingType.Base64 }
-  );
-
-  return audioPath;
-}
-
-export async function playAudio(audioPath: string): Promise<void> {
-  const { sound } = await Audio.Sound.createAsync({ uri: audioPath });
-  await sound.playAsync();
-  
-  // Wait for playback to complete
-  return new Promise((resolve) => {
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
-        resolve();
-      }
     });
-  });
-}
 
-// Pre-generate common phrases for faster playback
-export async function preloadCommonPhrases(): Promise<Map<string, string>> {
-  const phrases = [
-    "Let's begin. Are you ready?",
-    "Thank you. Now let's move on to the next part.",
-    "Could you tell me a bit more about that?",
-    "That's interesting. Why do you think that is?",
-  ];
-  
-  const cache = new Map<string, string>();
-  
-  for (const phrase of phrases) {
-    const audioPath = await textToSpeech({ text: phrase });
-    cache.set(phrase, audioPath);
+    if (error) {
+      console.warn('Audio cache upload failed:', error);
+      return null;
+    }
+
+    return data.url;  // Returns the new public/signed URL
+  } catch (e) {
+    console.warn('Cache upload error:', e);
+    return null;
   }
-  
-  return cache;
 }
+```
+
+**Pre-generate common phrases for faster playback** (unchanged, but note: these can also be cached in Supabase if desired for global reuse):
+
+```typescript
+// ... (keep preloadCommonPhrases as-is; it's local cache only)
 ```
 
 #### 4.5.2 ElevenLabs STT Service
@@ -914,49 +868,19 @@ export class VoiceActivityDetector {
 }
 ```
 
-#### 4.5.4 Scripted Exam Hook (Parts 1, 4)
+#### 4.5.4 Scripted Exam Hook (Parts 1, 4) – Updated with Lazy Caching
 
 ```typescript
 // src/features/voice/hooks/useScriptedExam.ts
-import { useState, useCallback, useRef } from 'react';
-import { textToSpeech, playAudio } from '../services/elevenlabsTTS';
-import { speechToText } from '../services/elevenlabsSTT';
-import { VoiceActivityDetector } from '../services/voiceActivityDetection';
-import { getQuestionsForPart } from '../services/questionBank';
-import type { ExamLevel, ExamPart } from '@/types/exam';
-
-interface UseScriptedExamProps {
-  level: ExamLevel;
-  part: ExamPart;
-  onComplete: (transcript: ConversationTurn[]) => void;
-}
-
-interface ConversationTurn {
-  role: 'examiner' | 'candidate';
-  text: string;
-  timestamp: Date;
-}
-
-type ExamState = 'idle' | 'examiner_speaking' | 'candidate_speaking' | 'processing' | 'complete';
+// ... (keep existing imports and types)
 
 export function useScriptedExam({ level, part, onComplete }: UseScriptedExamProps) {
-  const [state, setState] = useState<ExamState>('idle');
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [transcript, setTranscript] = useState<ConversationTurn[]>([]);
-  const [audioLevel, setAudioLevel] = useState(0);
-  
-  const vadRef = useRef<VoiceActivityDetector | null>(null);
-  const questionsRef = useRef<string[]>([]);
-
-  const addToTranscript = useCallback((role: 'examiner' | 'candidate', text: string) => {
-    setTranscript(prev => [...prev, { role, text, timestamp: new Date() }]);
-  }, []);
+  // ... (keep existing state, refs, addToTranscript, etc.)
 
   const askNextQuestion = useCallback(async () => {
     const questions = questionsRef.current;
     
     if (currentQuestionIndex >= questions.length) {
-      // Exam complete
       setState('complete');
       onComplete(transcript);
       return;
@@ -965,68 +889,59 @@ export function useScriptedExam({ level, part, onComplete }: UseScriptedExamProp
     setState('examiner_speaking');
     const question = questions[currentQuestionIndex];
     
-    // Generate and play TTS
-    const audioPath = await textToSpeech({ text: question });
-    addToTranscript('examiner', question);
-    await playAudio(audioPath);
+    let audioPath: string;
+    let generatedUrl: string | null = null;
 
-    // Start listening for response
+    if (question.audio_url) {
+      // Reuse cached audio from Supabase
+      // Option: Direct play from URL (simplest, works offline if cached previously)
+      const { sound } = await Audio.Sound.createAsync({ uri: question.audio_url });
+      await sound.playAsync();
+      // Wait for finish (keep your existing playback promise logic)
+      await new Promise((resolve) => {
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            sound.unloadAsync();
+            resolve();
+          }
+        });
+      });
+    } else {
+      // On-demand TTS
+      const generatedPath = await textToSpeech({ text: question.question_text });
+      audioPath = generatedPath;
+
+      // Play
+      await playAudio(audioPath);
+
+      // Upload to cache for future (async, fire-and-forget)
+      uploadToCache(question.id, level, part, audioPath).then(url => {
+        if (url) {
+          // Optional: Update local question object or refetch if needed
+          console.log('Cached audio URL:', url);
+        }
+      });
+    }
+
+    addToTranscript('examiner', question.question_text);
+
+    // Start listening...
     setState('candidate_speaking');
     vadRef.current = new VoiceActivityDetector({
-      onSpeechStart: () => {
-        console.log('Candidate started speaking');
-      },
-      onSpeechEnd: async (audioUri) => {
-        setState('processing');
-        
-        // Transcribe response
-        const result = await speechToText(audioUri);
-        addToTranscript('candidate', result.text);
-        
-        // Move to next question
-        setCurrentQuestionIndex(prev => prev + 1);
-        await askNextQuestion();
-      },
-      onMeteringUpdate: (db) => {
-        // Normalize to 0-1 for UI
-        setAudioLevel(Math.max(0, (db + 60) / 60));
-      },
+      // ... (unchanged VAD callbacks)
     });
 
     await vadRef.current.start();
-  }, [currentQuestionIndex, transcript, addToTranscript, onComplete]);
+  }, [currentQuestionIndex, transcript, addToTranscript, onComplete, level, part]);
 
-  const startExam = useCallback(async () => {
-    // Load questions for this part
-    questionsRef.current = getQuestionsForPart(level, part);
-    setCurrentQuestionIndex(0);
-    setTranscript([]);
-    
-    // Start with first question
-    await askNextQuestion();
-  }, [level, part, askNextQuestion]);
-
-  const stopExam = useCallback(async () => {
-    if (vadRef.current) {
-      await vadRef.current.cancel();
-    }
-    setState('complete');
-    onComplete(transcript);
-  }, [transcript, onComplete]);
-
-  return {
-    state,
-    currentQuestionIndex,
-    totalQuestions: questionsRef.current.length,
-    transcript,
-    audioLevel,
-    startExam,
-    stopExam,
-    isExaminerSpeaking: state === 'examiner_speaking',
-    isCandidateSpeaking: state === 'candidate_speaking',
-  };
+  // ... (keep startExam, stopExam, etc. unchanged)
 }
 ```
+
+**Notes:**
+- For Part 2 (prompts + follow-ups), apply the same check/upload logic to `prompt_text` and `follow_up_question`.
+- Edge function handles secure upload (no client-side keys exposed).
+- If upload fails (e.g., network), retry next time—question stays uncached until success.
 
 #### 4.5.5 Exam Content Service (Database-Driven)
 
@@ -2195,7 +2110,10 @@ CREATE TABLE exam_questions (
     usage_count INTEGER DEFAULT 0,
     average_response_score DECIMAL(2,1),
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    -- Add for lazy audio caching
+    audio_url TEXT,                          -- Public/signed URL to cached MP3 in Storage
+    audio_generated_at TIMESTAMPTZ           -- Timestamp for potential invalidation/refresh
 );
 
 -- Part 2: Long Turn (photos + prompts)
@@ -2210,7 +2128,10 @@ CREATE TABLE exam_part2_content (
     difficulty INTEGER DEFAULT 2,
     usage_count INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    -- Add for lazy audio caching
+    audio_url TEXT,
+    audio_generated_at TIMESTAMPTZ
 );
 
 -- Part 3: Collaborative Task
@@ -2225,7 +2146,10 @@ CREATE TABLE exam_part3_content (
     difficulty INTEGER DEFAULT 2,
     usage_count INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    -- Add for lazy audio caching
+    audio_url TEXT,
+    audio_generated_at TIMESTAMPTZ
 );
 
 -- Conversation sessions (Part 3 tracking)
@@ -2275,6 +2199,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
+
+**Edge Functions (for secure TTS caching)**
+
+```sql
+-- ============================================
+-- EDGE FUNCTIONS (for secure TTS caching)
+-- ============================================
+
+-- Function: generate-and-cache-audio (Deno runtime)
+-- Invoked from client after on-demand TTS generation
+-- Uploads audio, returns URL, updates DB row
+-- (Implement in Supabase Dashboard > Functions)
+```
+
+(You would then paste the Deno code from my previous response into the actual Supabase function editor.)
 
 ### 4.7.9 Client Service Updates
 
@@ -3103,8 +3042,21 @@ CREATE TABLE exam_content (
     average_score DECIMAL(2,1),
     is_active BOOLEAN DEFAULT true,
 
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    -- Add for lazy audio caching (or add to exam_questions / exam_part2_content / exam_part3_content if using normalized schema)
+    audio_url TEXT,                          -- Public/signed URL to cached MP3 in Storage
+    audio_generated_at TIMESTAMPTZ           -- Timestamp for potential invalidation/refresh
 );
+
+-- ============================================
+-- EDGE FUNCTIONS (for secure TTS caching)
+-- ============================================
+
+-- Function: generate-and-cache-audio (Deno runtime)
+-- Invoked from client after on-demand TTS generation
+-- Uploads audio, returns URL, updates DB row
+-- (Implement in Supabase Dashboard > Functions)
 
 -- ============================================
 -- SUBSCRIPTIONS
@@ -3798,11 +3750,12 @@ full: 9999px (Circular icons, avatars)
 
 **UI Effects & Components:**
 ```
+creamy colored - modern - neobrutalist - minimal UI - 
 Borders:
 Standard:     1.5px to 2px Solid #000000
 Focus:        3px Solid #7C3AED
 
-Shadows (Hard/Retro Style):
+Shadows (Light neobrutalist style):
 Card Shadow:  X: 0, Y: 4px, Blur: 0, Spread: 0, Color: #000000 (Black)
 Active Drop:  X: 4px, Y: 4px, Blur: 0, Spread: 0, Color: #7C3AED (Violet)
 Floating Nav: Soft drop shadow (standard iOS blur)
@@ -4077,11 +4030,14 @@ interface ExamPartTiming {
 | Strategy | Savings | Effort |
 |----------|---------|--------|
 | **Hybrid architecture** | ~67% | ✅ Done |
+| **Lazy TTS caching** | ~50-90% on scripted TTS after cache builds (questions recycled) | Low-Medium (DB column + Edge Function + hook conditional) |
 | Cache common TTS phrases | ~10-20% | Low |
 | Batch STT requests | ~5% | Low |
 | Negotiate ElevenLabs enterprise | ~20-30% | Medium |
 | Use Whisper for STT fallback | ~40% on STT | Medium |
 | Limit Part 3 to 1x/day | Variable | Low |
+
+Lazy caching leverages question recycling: First play generates/pays TTS; subsequent plays use cached MP3 (zero TTS cost). Builds automatically—no batch script required. Egress negligible (<$0.01 per 1,000 downloads at scale).
 
 ### 20.6 Recommended ElevenLabs Tier
 
