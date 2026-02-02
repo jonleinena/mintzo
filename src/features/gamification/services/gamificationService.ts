@@ -14,6 +14,27 @@ const LEVELS = [
   10000, 13000, 16500, 20500, 25000, 30000, 36000, 43000, 51000, 60000,
 ];
 
+const DEFAULT_WEEKLY_GOAL_DAYS = 5;
+
+function getWeekRangeUtc(date: Date) {
+  const utcDate = new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+  ));
+  const day = utcDate.getUTCDay(); // 0 = Sunday
+  const diff = (day + 6) % 7; // Monday as start of week
+  const start = new Date(utcDate);
+  start.setUTCDate(utcDate.getUTCDate() - diff);
+  const end = new Date(start);
+  end.setUTCDate(start.getUTCDate() + 6);
+  return { start, end };
+}
+
+function toUtcDateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 export function calculateXP(
   sessionType: 'full_exam' | 'single_part',
   averageScore: number,
@@ -58,6 +79,28 @@ export function getXPProgress(totalXP: number, currentLevel: number): number {
   const range = nextThreshold - currentThreshold;
   if (range === 0) return 1;
   return (totalXP - currentThreshold) / range;
+}
+
+export async function fetchWeeklyPracticeProgress(
+  userId: string,
+  asOf: Date = new Date(),
+  goalDays: number = DEFAULT_WEEKLY_GOAL_DAYS,
+) {
+  const { start, end } = getWeekRangeUtc(asOf);
+  const { data, error } = await supabase
+    .from('daily_activity')
+    .select('date')
+    .eq('user_id', userId)
+    .gte('date', toUtcDateKey(start))
+    .lte('date', toUtcDateKey(end))
+    .gt('minutes_practiced', 0);
+
+  if (error) throw error;
+
+  return {
+    daysPracticed: data?.length ?? 0,
+    goalDays,
+  };
 }
 
 export async function updateProgressAfterSession(

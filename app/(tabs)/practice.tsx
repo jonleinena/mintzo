@@ -87,7 +87,11 @@ export default function PracticeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         <Text className="text-3xl font-black mt-4">Practice</Text>
         <Text className="text-sm text-slate-500 font-medium mb-6">
           {targetExamLevel} Speaking Exam

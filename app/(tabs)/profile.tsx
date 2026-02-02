@@ -35,7 +35,7 @@ function SettingsRow({
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { targetExamLevel, targetExamDate } = useSettingsStore();
+  const { targetExamLevel, targetExamDate, dailyPracticeGoal } = useSettingsStore();
   const { user, isAuthenticated } = useAuthStore();
 
   const examDateFormatted = targetExamDate
@@ -48,7 +48,11 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         <Text className="text-3xl font-black mt-4 mb-6">Profile</Text>
 
         {/* User Card */}
@@ -120,7 +124,7 @@ export default function ProfileScreen() {
           />
           <SettingsRow
             label="Daily goal"
-            value="45 min"
+            value={`${dailyPracticeGoal} min`}
             icon="time"
             onPress={() => {}}
           />

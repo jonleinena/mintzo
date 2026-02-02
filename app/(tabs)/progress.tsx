@@ -2,6 +2,7 @@ import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { ContributionsGraph } from "@/components/gamification/ContributionsGraph";
 
 function StatRow({
   label,
@@ -19,32 +20,6 @@ function StatRow({
         <Text className="text-base font-medium">{label}</Text>
       </View>
       <Text className="text-base font-black">{value}</Text>
-    </View>
-  );
-}
-
-function ContributionsPlaceholder() {
-  // Placeholder grid - will be replaced with real ContributionsGraph component
-  const weeks = 12;
-  const days = 7;
-  return (
-    <View className="bg-white border-2 border-black rounded-lg p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}>
-      <Text className="text-base font-bold mb-3">Practice Activity</Text>
-      <View className="flex-row gap-[3px]">
-        {Array.from({ length: weeks }).map((_, w) => (
-          <View key={w} className="gap-[3px]">
-            {Array.from({ length: days }).map((_, d) => (
-              <View
-                key={d}
-                className="w-[14px] h-[14px] rounded-[3px] bg-surface-secondary border border-black/10"
-              />
-            ))}
-          </View>
-        ))}
-      </View>
-      <Text className="text-xs text-slate-400 mt-3">
-        Start practicing to fill in your activity graph
-      </Text>
     </View>
   );
 }
@@ -87,7 +62,11 @@ export default function ProgressScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         <Text className="text-3xl font-black mt-4">Progress</Text>
         <Text className="text-sm text-slate-500 font-medium mb-6">
           {targetExamLevel} Speaking
@@ -95,7 +74,7 @@ export default function ProgressScreen() {
 
         {/* Contributions Graph */}
         <View className="mb-6">
-          <ContributionsPlaceholder />
+          <ContributionsGraph data={[]} />
         </View>
 
         {/* Stats */}

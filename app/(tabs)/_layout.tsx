@@ -12,16 +12,17 @@ function TabIcon({
   label: string;
 }) {
   return (
-    <View className="items-center justify-center pt-2">
+    <View className="items-center justify-center pt-1 w-[72px]">
       <Ionicons
         name={name}
         size={24}
         color={focused ? "#7C3AED" : "#64748B"}
       />
       <Text
-        className={`text-[11px] mt-1 ${
+        className={`text-[10px] mt-0.5 ${
           focused ? "text-brand-violet font-bold" : "text-slate-500"
         }`}
+        numberOfLines={1}
       >
         {label}
       </Text>
@@ -36,11 +37,26 @@ export default function TabLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopWidth: 2,
-          borderTopColor: "#000000",
-          height: 80,
-          paddingBottom: 20,
+          backgroundColor: "#F8F8F8",
+          borderWidth: 2,
+          borderColor: "#000000",
+          height: 72,
+          paddingBottom: 12,
+          paddingTop: 8,
+          marginHorizontal: 16,
+          marginBottom: 12,
+          borderRadius: 24,
+          position: "absolute",
+          left: 0,
+          right: 0,
+          shadowColor: "#000000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 10,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 2,
         },
       }}
     >

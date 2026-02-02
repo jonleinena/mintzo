@@ -2,24 +2,13 @@ import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
 import { useSettingsStore } from "@/stores/settingsStore";
-
-function DaysUntilExam({ dateString }: { dateString: string | null }) {
-  if (!dateString) return null;
-  const examDate = new Date(dateString);
-  const now = new Date();
-  const diff = Math.ceil(
-    (examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (diff < 0) return null;
-  return (
-    <View className="bg-surface-cream border-2 border-black rounded-lg p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}>
-      <Text className="text-sm text-slate-500 font-medium">Exam countdown</Text>
-      <Text className="text-4xl font-black mt-1">{diff}</Text>
-      <Text className="text-sm text-slate-500">days to go</Text>
-    </View>
-  );
-}
+import { useAuthStore } from "@/stores/authStore";
+import { ExamCountdown } from "@/components/plan/ExamCountdown";
+import { ProgressRing } from "@/components/plan/ProgressRing";
+import { DailyPlan } from "@/components/plan/DailyPlan";
+import { fetchWeeklyPracticeProgress } from "@/features/gamification/services/gamificationService";
 
 function StatCard({
   label,
@@ -89,11 +78,67 @@ function QuickAction({
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { targetExamLevel, targetExamDate } = useSettingsStore();
+  const { targetExamLevel, targetExamDate, dailyPracticeGoal } =
+    useSettingsStore();
+  const { user } = useAuthStore();
+  const [weeklyProgress, setWeeklyProgress] = useState({
+    daysPracticed: 0,
+    goalDays: 5,
+    isLoading: true,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!user?.id) {
+      setWeeklyProgress({ daysPracticed: 0, goalDays: 5, isLoading: false });
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    setWeeklyProgress((prev) => ({ ...prev, isLoading: true }));
+
+    fetchWeeklyPracticeProgress(user.id)
+      .then((progress) => {
+        if (!isMounted) return;
+        setWeeklyProgress({
+          daysPracticed: progress.daysPracticed,
+          goalDays: progress.goalDays,
+          isLoading: false,
+        });
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setWeeklyProgress({ daysPracticed: 0, goalDays: 5, isLoading: false });
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  const planItems = useMemo(() => [
+    { title: "Part 1 warm-up", minutes: Math.round(dailyPracticeGoal * 0.2) },
+    { title: "Part 2 long turn", minutes: Math.round(dailyPracticeGoal * 0.3) },
+    { title: "Part 3 collaboration", minutes: Math.round(dailyPracticeGoal * 0.25) },
+    {
+      title: "Review feedback",
+      minutes: Math.max(5, dailyPracticeGoal - Math.round(dailyPracticeGoal * 0.75)),
+    },
+  ], [dailyPracticeGoal]);
+
+  const weeklyGoalProgress = weeklyProgress.goalDays > 0
+    ? weeklyProgress.daysPracticed / weeklyProgress.goalDays
+    : 0;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         {/* Header */}
         <View className="flex-row items-center justify-between mt-4 mb-6">
           <View>
@@ -109,33 +154,42 @@ export default function HomeScreen() {
 
         {/* Stats Row */}
         <View className="flex-row gap-3 mb-6">
-          <DaysUntilExam dateString={targetExamDate} />
-          <View className="flex-1 gap-3">
-            <StatCard
-              label="Current streak"
-              value="0"
-              icon="flame"
-              color="bg-surface-mint"
-            />
-            <StatCard
-              label="Sessions"
-              value="0"
-              icon="mic"
-              color="bg-surface-indigo"
+          <View className="flex-1">
+            <ExamCountdown examDate={targetExamDate} />
+          </View>
+          <View
+            className="bg-white border-2 border-black rounded-lg px-5 py-4 items-center justify-center"
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+              elevation: 4,
+              minHeight: 124,
+            }}
+          >
+            <ProgressRing
+              progress={weeklyGoalProgress}
+              size={80}
+              strokeWidth={8}
+              label="Weekly goal"
+              valueLabel={
+                weeklyProgress.isLoading
+                  ? "Loading..."
+                  : `${weeklyProgress.daysPracticed} / ${weeklyProgress.goalDays} days`
+              }
             />
           </View>
         </View>
 
-        {/* Today's Practice */}
-        <Text className="text-xl font-black mb-3">Today's Practice</Text>
-        <View className="bg-surface-secondary border-2 border-black rounded-lg p-4 mb-6" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}>
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-base font-bold">0 / 45 min</Text>
-            <Text className="text-sm text-slate-500">Daily goal</Text>
-          </View>
-          <View className="bg-white border-2 border-black rounded-full h-4 overflow-hidden">
-            <View className="bg-brand-violet h-full rounded-full" style={{ width: "0%" }} />
-          </View>
+        {/* Daily Plan */}
+        <Text className="text-xl font-black mb-3">Your Plan</Text>
+        <View className="mb-6">
+          <DailyPlan
+            totalMinutes={dailyPracticeGoal}
+            completedMinutes={0}
+            items={planItems}
+          />
         </View>
 
         {/* Quick Actions */}
