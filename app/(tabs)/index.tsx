@@ -175,7 +175,7 @@ export default function HomeScreen() {
               progress={weeklyGoalProgress}
               size={64}
               strokeWidth={6}
-              label={null}
+              label={undefined}
             />
             <Text className="text-[10px] text-slate-500">
               {weeklyProgress.isLoading
