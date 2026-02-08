@@ -1,6 +1,14 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useEffect, useState } from "react";
+import { supabase } from "@/services/supabase/client";
+import {
+  calculateWeightedAverage,
+  mapToCambridgeScale,
+  determineGrade,
+} from "@/features/scoring/services/gradingEngine";
+import type { ExamLevel, ExamScores, ExamFeedback } from "@/types/exam";
 
 const CRITERIA = [
   { key: "grammar", label: "Grammar & Vocabulary", color: "bg-blue-300" },
@@ -10,6 +18,18 @@ const CRITERIA = [
   { key: "interaction", label: "Interactive Communication", color: "bg-violet-300" },
   { key: "globalAchievement", label: "Global Achievement", color: "bg-orange-300" },
 ] as const;
+
+interface SessionResult {
+  level: ExamLevel;
+  scores: ExamScores | null;
+  xp_earned: number;
+  status: string;
+}
+
+interface PartResult {
+  part: string;
+  feedback: ExamFeedback | null;
+}
 
 function ScoreBar({
   label,
@@ -28,7 +48,7 @@ function ScoreBar({
       <View className="mb-1 flex-row items-center justify-between">
         <Text className="text-sm font-bold text-black">{label}</Text>
         <Text className="text-sm font-bold text-gray-600">
-          {score}/{maxScore}
+          {score.toFixed(1)}/{maxScore}
         </Text>
       </View>
       <View className="h-6 overflow-hidden rounded-md border-2 border-black bg-gray-100">
@@ -45,8 +65,53 @@ export default function ExamResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  // Placeholder scores - all zero
-  const scores = {
+  const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<SessionResult | null>(null);
+  const [feedback, setFeedback] = useState<ExamFeedback | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchResults() {
+      if (!id) return;
+
+      try {
+        // Fetch session data
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("exam_sessions")
+          .select("level, scores, xp_earned, status")
+          .eq("id", id)
+          .single();
+
+        if (sessionError) {
+          throw new Error(sessionError.message);
+        }
+
+        setSession(sessionData as SessionResult);
+
+        // Fetch part results for feedback
+        const { data: partResults, error: partError } = await supabase
+          .from("exam_part_results")
+          .select("part, feedback")
+          .eq("session_id", id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (!partError && partResults && partResults.length > 0) {
+          setFeedback((partResults[0] as PartResult).feedback);
+        }
+      } catch (err) {
+        console.error("Failed to fetch results:", err);
+        setError((err as Error).message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchResults();
+  }, [id]);
+
+  // Default scores if not available
+  const scores: ExamScores = session?.scores ?? {
     grammar: 0,
     vocabulary: 0,
     discourse: 0,
@@ -55,8 +120,35 @@ export default function ExamResultsScreen() {
     globalAchievement: 0,
   };
 
-  const cambridgeScore = 0;
-  const grade = "N/A";
+  const level = session?.level ?? "B2";
+  const averageScore = calculateWeightedAverage(scores);
+  const cambridgeScore = mapToCambridgeScale(averageScore, level);
+  const grade = determineGrade(cambridgeScore, level);
+  const xpEarned = session?.xp_earned ?? 0;
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-amber-50">
+        <ActivityIndicator size="large" color="#000" />
+        <Text className="mt-4 text-base text-gray-600">Loading results...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-amber-50 px-6">
+        <Text className="text-lg font-bold text-red-600">Error loading results</Text>
+        <Text className="mt-2 text-center text-base text-gray-600">{error}</Text>
+        <Pressable
+          onPress={() => router.replace("/(tabs)")}
+          className="mt-6 rounded-lg border-2 border-black bg-green-300 px-6 py-3"
+        >
+          <Text className="font-bold text-black">Back to Home</Text>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-amber-50">
@@ -64,7 +156,7 @@ export default function ExamResultsScreen() {
         <Text className="mb-2 text-3xl font-black text-black">
           Exam Results
         </Text>
-        <Text className="mb-6 text-base text-gray-500">Session {id}</Text>
+        <Text className="mb-6 text-base text-gray-500">{level} Speaking Test</Text>
 
         {/* Grade card */}
         <View
@@ -84,6 +176,11 @@ export default function ExamResultsScreen() {
           <Text className="mt-2 text-sm text-gray-600">
             Cambridge Scale: {cambridgeScore}
           </Text>
+          {xpEarned > 0 && (
+            <Text className="mt-2 text-sm font-bold text-violet-700">
+              +{xpEarned} XP
+            </Text>
+          )}
         </View>
 
         {/* Score breakdown */}
@@ -110,7 +207,7 @@ export default function ExamResultsScreen() {
           ))}
         </View>
 
-        {/* Placeholder feedback */}
+        {/* Feedback section */}
         <View
           className="mb-8 rounded-lg border-2 border-black bg-sky-200 p-5"
           style={{
@@ -122,10 +219,52 @@ export default function ExamResultsScreen() {
           }}
         >
           <Text className="mb-2 text-lg font-black text-black">Feedback</Text>
-          <Text className="text-base leading-6 text-gray-700">
-            Detailed feedback will appear here after your exam is graded by the
-            AI examiner.
-          </Text>
+          {feedback ? (
+            <>
+              <Text className="mb-4 text-base leading-6 text-gray-700">
+                {feedback.summary}
+              </Text>
+
+              {feedback.strengths && feedback.strengths.length > 0 && (
+                <View className="mb-4">
+                  <Text className="mb-2 font-bold text-green-700">Strengths:</Text>
+                  {feedback.strengths.map((strength, i) => (
+                    <Text key={i} className="mb-1 text-sm text-gray-700">
+                      - {strength}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              {feedback.improvements && feedback.improvements.length > 0 && (
+                <View className="mb-4">
+                  <Text className="mb-2 font-bold text-orange-700">Areas to Improve:</Text>
+                  {feedback.improvements.map((improvement, i) => (
+                    <Text key={i} className="mb-1 text-sm text-gray-700">
+                      - {improvement}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              {feedback.examplePhrases && feedback.examplePhrases.length > 0 && (
+                <View>
+                  <Text className="mb-2 font-bold text-blue-700">Useful Phrases:</Text>
+                  {feedback.examplePhrases.map((phrase, i) => (
+                    <Text key={i} className="mb-1 text-sm italic text-gray-700">
+                      "{phrase}"
+                    </Text>
+                  ))}
+                </View>
+              )}
+            </>
+          ) : (
+            <Text className="text-base leading-6 text-gray-700">
+              {session?.status === "completed"
+                ? "Feedback is being generated..."
+                : "Complete the exam to receive detailed feedback."}
+            </Text>
+          )}
         </View>
       </ScrollView>
 

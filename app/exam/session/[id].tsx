@@ -4,10 +4,11 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BreathingOrb } from "@/components/exam/BreathingOrb";
 import { ConversationScreen } from "@/components/exam/ConversationScreen";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScriptedExam } from "@/features/voice/hooks/useScriptedExam";
-import type { ExamLevel, ExamPart } from "@/types/exam";
+import type { ConversationTurn, ExamLevel, ExamPart } from "@/types/exam";
 import { getRandomQuestions } from "@/services/api/examContentApi";
+import { gradeExam } from "@/services/api/voiceApi";
 
 function normalizeLevel(value?: string): ExamLevel {
   const upper = value?.toUpperCase();
@@ -41,14 +42,39 @@ export default function ExamSessionScreen() {
   >([]);
   const [isLoading, setIsLoading] = useState(isScripted);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isGrading, setIsGrading] = useState(false);
+  const transcriptsRef = useRef<Record<string, string>>({});
+
+  const handleExamComplete = useCallback(
+    async (fullTranscript: ConversationTurn[]) => {
+      // Convert transcript array to string
+      const transcriptText = fullTranscript
+        .map((turn) => `${turn.role}: ${turn.text}`)
+        .join("\n");
+
+      // Store transcript for this part
+      transcriptsRef.current[examPart] = transcriptText;
+
+      // Grade the exam
+      setIsGrading(true);
+      try {
+        await gradeExam(id, transcriptsRef.current, examLevel);
+      } catch (error) {
+        console.error("Grading failed:", error);
+        // Still navigate to results even if grading fails
+      } finally {
+        setIsGrading(false);
+        router.replace(`/exam/session/results/${id}`);
+      }
+    },
+    [id, examLevel, examPart, router],
+  );
 
   const { state, startExam, stopExam } = useScriptedExam({
     level: examLevel,
     part: examPart,
     questions,
-    onComplete: (_fullTranscript) => {
-      router.replace(`/exam/session/results/${id}`);
-    },
+    onComplete: handleExamComplete,
     onError: (error) => {
       setLoadError(error.message);
     },
@@ -101,12 +127,28 @@ export default function ExamSessionScreen() {
     router.replace(`/exam/session/results/${id}`);
   };
 
+  const handlePart3Complete = useCallback(
+    async (transcript: string) => {
+      transcriptsRef.current["part3"] = transcript;
+      setIsGrading(true);
+      try {
+        await gradeExam(id, transcriptsRef.current, examLevel);
+      } catch (error) {
+        console.error("Grading failed:", error);
+      } finally {
+        setIsGrading(false);
+        router.replace(`/exam/session/results/${id}`);
+      }
+    },
+    [id, examLevel, router],
+  );
+
   if (examPart === "part3") {
     return (
       <ConversationScreen
         level={examLevel}
         part={examPart}
-        onComplete={() => handleEndExam()}
+        onComplete={handlePart3Complete}
       />
     );
   }
@@ -139,7 +181,14 @@ export default function ExamSessionScreen() {
       <SafeAreaView className="flex-1 items-center justify-center px-6">
         <BreathingOrb isActive isSpeaking={state === "examiner_speaking"} />
 
-        {isLoading ? (
+        {isGrading ? (
+          <View className="mt-10 items-center">
+            <ActivityIndicator color="#ffffff" />
+            <Text className="mt-3 text-base text-gray-300">
+              Grading your exam...
+            </Text>
+          </View>
+        ) : isLoading ? (
           <View className="mt-10 items-center">
             <ActivityIndicator color="#ffffff" />
             <Text className="mt-3 text-base text-gray-300">
