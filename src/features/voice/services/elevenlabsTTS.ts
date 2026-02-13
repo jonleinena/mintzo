@@ -122,7 +122,7 @@ export async function uploadToCache(
     const file = new File(localAudioPath);
     const base64Audio = await file.base64();
 
-    const { data, error } = await supabase.functions.invoke('generate-and-cache-audio', {
+    const { data, error } = await supabase.functions.invoke('cache-audio', {
       body: {
         questionId,
         level,

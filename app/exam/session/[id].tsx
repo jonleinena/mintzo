@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BreathingOrb } from "@/components/exam/BreathingOrb";
 import { ConversationScreen } from "@/components/exam/ConversationScreen";
+import { Part2LongTurn } from "@/components/exam/Part2LongTurn";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScriptedExam } from "@/features/voice/hooks/useScriptedExam";
 import type { ConversationTurn, ExamLevel, ExamPart } from "@/types/exam";
@@ -153,25 +154,12 @@ export default function ExamSessionScreen() {
     );
   }
 
-  if (!isScripted) {
+  if (examPart === "part2") {
     return (
-      <View className="flex-1 bg-black">
-        <StatusBar hidden />
-        <SafeAreaView className="flex-1 items-center justify-center px-6">
-          <Text className="text-xl font-semibold text-white">
-            This part is not wired yet.
-          </Text>
-          <Text className="mt-3 text-center text-base text-gray-400">
-            We will add Part 2 visuals and recording next. For now, use Part 1 or Part 3.
-          </Text>
-          <Pressable
-            onPress={handleEndExam}
-            className="mt-8 rounded-lg border-2 border-white/40 bg-white/10 px-6 py-3"
-          >
-            <Text className="text-base font-bold text-white">Back</Text>
-          </Pressable>
-        </SafeAreaView>
-      </View>
+      <Part2LongTurn
+        level={examLevel}
+        onComplete={handleExamComplete}
+      />
     );
   }
 
