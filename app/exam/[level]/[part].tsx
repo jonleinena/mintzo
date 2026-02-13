@@ -2,6 +2,7 @@ import { View, Text, Pressable, ScrollView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { ExamPart } from "@/types/exam";
+import { useSubscriptionGate } from "@/hooks/useSubscriptionGate";
 
 const PART_INFO: Record<
   ExamPart,
@@ -63,9 +64,17 @@ export default function ExamPartScreen() {
     part: string;
   }>();
   const router = useRouter();
+  const { requirePremium } = useSubscriptionGate();
   const info = PART_INFO[part as ExamPart] ?? PART_INFO.part1;
+  const isPart1 = part === "part1";
 
   const handleStart = () => {
+    // Parts 2/3/4 require premium
+    if (!isPart1) {
+      const allowed = requirePremium(`/exam/session/${Date.now()}`);
+      if (!allowed) return;
+    }
+
     const sessionId = Date.now().toString();
     router.push({
       pathname: `/exam/session/${sessionId}` as any,

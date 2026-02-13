@@ -4,6 +4,8 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useSubscriptionStore } from "@/stores/subscriptionStore";
+import { supabase } from "@/services/supabase/client";
 
 function SettingsRow({
   label,
@@ -37,6 +39,11 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { targetExamLevel, targetExamDate, dailyPracticeGoal } = useSettingsStore();
   const { user, isAuthenticated } = useAuthStore();
+  const { isPremium, customerInfo } = useSubscriptionStore();
+
+  const subscriptionLabel = isPremium
+    ? customerInfo?.entitlements.active?.premium?.productIdentifier ?? "Active"
+    : "Free";
 
   const examDateFormatted = targetExamDate
     ? new Date(targetExamDate).toLocaleDateString("en-GB", {
@@ -143,7 +150,14 @@ export default function ProfileScreen() {
         >
           <Text className="text-base font-bold pt-4 pb-2">App</Text>
           <SettingsRow label="Notifications" icon="notifications" onPress={() => {}} />
-          <SettingsRow label="Subscription" icon="card" onPress={() => {}} />
+          <SettingsRow
+            label="Subscription"
+            value={subscriptionLabel}
+            icon="card"
+            onPress={() =>
+              isPremium ? {} : router.push("/paywall" as any)
+            }
+          />
           <SettingsRow label="About" icon="information-circle" onPress={() => {}} />
         </View>
 
@@ -152,7 +166,7 @@ export default function ProfileScreen() {
           <Pressable
             onPress={() => Alert.alert("Sign Out", "Are you sure?", [
               { text: "Cancel", style: "cancel" },
-              { text: "Sign Out", style: "destructive", onPress: () => {} },
+              { text: "Sign Out", style: "destructive", onPress: () => supabase.auth.signOut() },
             ])}
             className="border-2 border-red-400 rounded-lg py-3 mb-8"
           >

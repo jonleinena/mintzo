@@ -7,6 +7,16 @@ import * as SplashScreen from "expo-splash-screen";
 import { supabase } from "@/services/supabase/client";
 import { useAuthStore } from "@/stores/authStore";
 import { useSettingsStore } from "@/stores/settingsStore";
+import {
+  useSubscriptionStore,
+  setupSubscriptionListener,
+  removeSubscriptionListener,
+} from "@/stores/subscriptionStore";
+import {
+  initializePurchases,
+  loginUser,
+  logoutUser,
+} from "@/services/revenuecat/purchaseService";
 import type { Session } from "@supabase/supabase-js";
 import { ElevenLabsProvider } from "@elevenlabs/react-native";
 
@@ -40,12 +50,21 @@ export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const { setUser, setLoading } = useAuthStore();
   const { setSettingsFromProfile, resetSettings } = useSettingsStore();
+  const { checkSubscription, reset: resetSubscription } =
+    useSubscriptionStore();
 
   useEffect(() => {
+    // Initialize RevenueCat SDK
+    initializePurchases();
+    setupSubscriptionListener();
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
+        // Link RevenueCat user and check subscription
+        loginUser(session.user.id).then(() => checkSubscription());
+
         // Fetch profile and set user
         supabase
           .from("profiles")
@@ -94,8 +113,13 @@ export default function RootLayout() {
       if (!session) {
         setUser(null);
         resetSettings();
+        logoutUser();
+        resetSubscription();
         return;
       }
+      // Link RevenueCat user on auth change
+      loginUser(session.user.id).then(() => checkSubscription());
+
       supabase
         .from("profiles")
         .select("*")
@@ -130,7 +154,10 @@ export default function RootLayout() {
         });
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      removeSubscriptionListener();
+    };
   }, []);
 
   useProtectedRoute(session, isLoading);
@@ -144,6 +171,10 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="exam" />
+          <Stack.Screen
+            name="paywall"
+            options={{ presentation: "modal" }}
+          />
           <Stack.Screen name="+not-found" />
         </Stack>
       </QueryClientProvider>

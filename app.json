@@ -52,7 +52,8 @@
         {
           "sounds": []
         }
-      ]
+      ],
+      "react-native-purchases"
     ],
     "experiments": {
       "typedRoutes": true

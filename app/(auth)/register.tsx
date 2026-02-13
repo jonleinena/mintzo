@@ -9,12 +9,16 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "@/services/supabase/client";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { returnTo, finalTarget } = useLocalSearchParams<{
+    returnTo?: string;
+    finalTarget?: string;
+  }>();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,6 +48,11 @@ export default function RegisterScreen() {
     setLoading(false);
     if (error) {
       Alert.alert("Registration failed", error.message);
+    } else if (returnTo) {
+      router.replace({
+        pathname: returnTo as any,
+        params: finalTarget ? { returnTo: finalTarget } : undefined,
+      });
     } else {
       router.replace("/(tabs)");
     }
