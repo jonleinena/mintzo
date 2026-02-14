@@ -44,41 +44,40 @@ Deno.serve(async (req: Request) => {
     }
 
     // Look up Part 3 content
-    let contentPrompt: string | undefined;
-    let contentOptions: string[] | undefined;
-    let contentId: string | undefined;
+    let pickedContent: { id: string; discussion_prompt: string; options: string[]; diagram_mermaid?: string; decision_prompt?: string } | null = null;
+
+    const contentFields = 'id, discussion_prompt, options, diagram_mermaid, decision_prompt';
 
     if (part3ContentId) {
-      const { data: content } = await supabase
+      const { data } = await supabase
         .from('exam_part3_content')
-        .select('id, discussion_prompt, options, diagram_mermaid, decision_prompt')
+        .select(contentFields)
         .eq('id', part3ContentId)
         .single();
 
-      if (content) {
-        contentId = content.id;
-        contentPrompt = content.discussion_prompt;
-        contentOptions = content.options;
-      }
+      pickedContent = data;
     }
 
     // If no specific content requested, pick random content for this level
-    if (!contentId) {
-      const { data: content } = await supabase
+    if (!pickedContent) {
+      const { data } = await supabase
         .from('exam_part3_content')
-        .select('id, discussion_prompt, options, diagram_mermaid, decision_prompt')
+        .select(contentFields)
         .eq('level', level)
         .eq('is_active', true)
         .order('usage_count', { ascending: true })
         .limit(5);
 
-      if (content && content.length > 0) {
-        const picked = content[Math.floor(Math.random() * content.length)];
-        contentId = picked.id;
-        contentPrompt = picked.discussion_prompt;
-        contentOptions = picked.options;
+      if (data && data.length > 0) {
+        pickedContent = data[Math.floor(Math.random() * data.length)];
       }
     }
+
+    const contentId = pickedContent?.id;
+    const contentPrompt = pickedContent?.discussion_prompt;
+    const contentOptions = pickedContent?.options;
+    const diagramMermaid = pickedContent?.diagram_mermaid;
+    const decisionPrompt = pickedContent?.decision_prompt;
 
     // Get signed URL from ElevenLabs
     const apiKey = Deno.env.get('ELEVENLABS_API_KEY');
@@ -140,6 +139,8 @@ Deno.serve(async (req: Request) => {
       sessionId: session.id,
       contentPrompt,
       contentOptions,
+      diagramMermaid,
+      decisionPrompt,
     });
   } catch (error) {
     console.error('Agent session error:', error);

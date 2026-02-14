@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { BreathingOrb } from '@/components/exam/BreathingOrb';
+import { MermaidDiagram } from '@/components/exam/MermaidDiagram';
 import { useConversationalAI } from '@/features/voice/hooks/useConversationalAI';
 import type { ExamLevel, ExamPart } from '@/types/exam';
 
@@ -11,7 +12,7 @@ interface ConversationScreenProps {
 }
 
 export function ConversationScreen({ level, part, onComplete }: ConversationScreenProps) {
-  const { status, isSpeaking, startSession, endSession, canStart } =
+  const { status, isSpeaking, startSession, endSession, canStart, diagramMermaid } =
     useConversationalAI({
       level,
       part,
@@ -31,7 +32,14 @@ export function ConversationScreen({ level, part, onComplete }: ConversationScre
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <BreathingOrb isActive={status === 'connected'} isSpeaking={isSpeaking} />
+      {diagramMermaid && (
+        <View style={styles.diagramContainer}>
+          <MermaidDiagram chart={diagramMermaid} height={280} />
+        </View>
+      )}
+      <View style={styles.orbContainer}>
+        <BreathingOrb isActive={status === 'connected'} isSpeaking={isSpeaking} />
+      </View>
     </View>
   );
 }
@@ -40,6 +48,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  diagramContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  orbContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

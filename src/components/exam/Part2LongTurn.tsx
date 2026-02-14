@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { Image, View, Text, ScrollView, ActivityIndicator, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BreathingOrb } from '@/components/exam/BreathingOrb';
@@ -81,6 +81,7 @@ export function Part2LongTurn({ level, onComplete }: Part2LongTurnProps) {
 
   const isSpeakingPhase = state === 'speaking' || state === 'follow_up_recording';
   const isExaminerSpeaking = state === 'prep' || state === 'follow_up_speaking';
+  const hasImages = content.imageUrls.length > 0 && Boolean(content.imageUrls[0]);
 
   return (
     <View className="flex-1 bg-black">
@@ -90,8 +91,21 @@ export function Part2LongTurn({ level, onComplete }: Part2LongTurnProps) {
           className="flex-1"
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
         >
-          {/* Photo placeholders showing comparison points */}
-          {content.comparisonPoints.length > 0 && (
+          {hasImages && (
+            <View className="mb-4 mt-2 flex-row gap-2">
+              {content.imageUrls.map((url, i) => (
+                <View key={i} className="flex-1">
+                  <Image
+                    source={{ uri: url }}
+                    className="w-full rounded-lg"
+                    style={{ height: 160 }}
+                    resizeMode="cover"
+                  />
+                </View>
+              ))}
+            </View>
+          )}
+          {!hasImages && content.comparisonPoints.length > 0 && (
             <View className="mb-4 mt-2 flex-row gap-2">
               {content.comparisonPoints.slice(0, 3).map((point, i) => (
                 <PhotoPlaceholder key={i} point={point} index={i} />

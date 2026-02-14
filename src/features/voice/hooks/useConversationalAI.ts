@@ -31,6 +31,8 @@ export function useConversationalAI({
   const [isStarting, setIsStarting] = useState(false);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [diagramMermaid, setDiagramMermaid] = useState<string | undefined>();
+  const [contentOptions, setContentOptions] = useState<string[] | undefined>();
   const messagesRef = useRef<ConversationMessage[]>([]);
 
   const conversation = useConversation({
@@ -77,16 +79,23 @@ export function useConversationalAI({
         // Get signed URL and content from edge function
         const agentSession = await getAgentSession(level, part3ContentId ?? '');
 
+        setDiagramMermaid(agentSession.diagramMermaid);
+        setContentOptions(agentSession.contentOptions);
+
         const sessionConfig = {
           signedUrl: agentSession.signedUrl,
-          dynamicVariables: {
-            platform: Platform.OS,
-            examLevel: level,
-            examPart: part,
-            ...(agentSession.contentPrompt ? { collaborativeTaskContent: agentSession.contentPrompt } : {}),
-            ...(collaborativeTaskContent ? { collaborativeTaskContent } : {}),
-            ...dynamicVariables,
-          },
+          dynamicVariables: Object.fromEntries(
+            Object.entries({
+              platform: Platform.OS,
+              examLevel: level,
+              examPart: part,
+              collaborativeTaskContent: collaborativeTaskContent ?? agentSession.contentPrompt,
+              diagramText: agentSession.diagramMermaid,
+              optionsList: agentSession.contentOptions ? JSON.stringify(agentSession.contentOptions) : undefined,
+              decisionPrompt: agentSession.decisionPrompt,
+              ...dynamicVariables,
+            }).filter(([, v]) => v !== undefined),
+          ),
         };
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ElevenLabs SDK accepts signedUrl but types don't expose it
@@ -133,6 +142,8 @@ export function useConversationalAI({
     isStarting,
     sessionId,
     messages,
+    diagramMermaid,
+    contentOptions,
     startSession,
     endSession,
     sendTextMessage,
