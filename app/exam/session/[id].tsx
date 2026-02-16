@@ -2,6 +2,7 @@ import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BreathingOrb } from "@/components/exam/BreathingOrb";
 import { ConversationScreen } from "@/components/exam/ConversationScreen";
 import { Part2LongTurn } from "@/components/exam/Part2LongTurn";
@@ -10,6 +11,8 @@ import { useScriptedExam } from "@/features/voice/hooks/useScriptedExam";
 import type { ConversationTurn, ExamLevel, ExamPart } from "@/types/exam";
 import { getRandomQuestions } from "@/services/api/examContentApi";
 import { gradeExam } from "@/services/api/voiceApi";
+
+const FREE_TRIAL_KEY = "mintzo_free_trial_used";
 
 function normalizeLevel(value?: string): ExamLevel {
   const upper = value?.toUpperCase();
@@ -27,12 +30,14 @@ function normalizePart(value?: string): ExamPart {
 }
 
 export default function ExamSessionScreen() {
-  const { id, level, part } = useLocalSearchParams<{
+  const { id, level, part, freeTrial } = useLocalSearchParams<{
     id: string;
     level?: string;
     part?: string;
+    freeTrial?: string;
   }>();
   const router = useRouter();
+  const isFreeTrial = freeTrial === "true";
 
   const examLevel = useMemo(() => normalizeLevel(level), [level]);
   const examPart = useMemo(() => normalizePart(part), [part]);
@@ -56,6 +61,13 @@ export default function ExamSessionScreen() {
       // Store transcript for this part
       transcriptsRef.current[examPart] = transcriptText;
 
+      if (isFreeTrial) {
+        // Free trial: mark as used, skip grading, redirect to register
+        await AsyncStorage.setItem(FREE_TRIAL_KEY, "true");
+        router.replace("/(auth)/register" as any);
+        return;
+      }
+
       // Grade the exam
       setIsGrading(true);
       try {
@@ -68,7 +80,7 @@ export default function ExamSessionScreen() {
         router.replace(`/exam/session/results/${id}`);
       }
     },
-    [id, examLevel, examPart, router],
+    [id, examLevel, examPart, isFreeTrial, router],
   );
 
   const { state, startExam, stopExam } = useScriptedExam({
@@ -124,7 +136,12 @@ export default function ExamSessionScreen() {
     };
   }, [isLoading, isScripted, questions.length, startExam, stopExam]);
 
-  const handleEndExam = () => {
+  const handleEndExam = async () => {
+    if (isFreeTrial) {
+      await AsyncStorage.setItem(FREE_TRIAL_KEY, "true");
+      router.replace("/(auth)/register" as any);
+      return;
+    }
     router.replace(`/exam/session/results/${id}`);
   };
 

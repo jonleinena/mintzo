@@ -5,6 +5,7 @@ import {
   checkEntitlement,
   getOfferings,
   getCustomerInfo,
+  isPurchasesInitialized,
 } from '@/services/revenuecat/purchaseService';
 import { ENTITLEMENTS } from '@/types/subscription';
 
@@ -26,6 +27,10 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   offerings: null,
 
   checkSubscription: async () => {
+    if (!isPurchasesInitialized()) {
+      set({ isLoading: false });
+      return;
+    }
     set({ isLoading: true });
     try {
       const isPremium = await checkEntitlement();
@@ -37,6 +42,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   },
 
   loadOfferings: async () => {
+    if (!isPurchasesInitialized()) return;
     const offerings = await getOfferings();
     set({ offerings });
   },
@@ -53,6 +59,7 @@ let listenerSetup = false;
 
 export function setupSubscriptionListener() {
   if (listenerSetup) return;
+  if (!isPurchasesInitialized()) return;
   listenerSetup = true;
   Purchases.addCustomerInfoUpdateListener((info) => {
     useSubscriptionStore.getState().setCustomerInfo(info);

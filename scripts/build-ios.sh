@@ -7,7 +7,7 @@ echo "=== Mintzo iOS Build ==="
 echo ""
 
 # Step 1: Check prerequisites
-echo "[1/5] Checking prerequisites..."
+echo "[1/4] Checking prerequisites..."
 
 if ! command -v bun &>/dev/null; then
   echo "Error: bun is not installed. Install it: https://bun.sh"
@@ -24,20 +24,20 @@ echo "  pod: $(pod --version)"
 echo ""
 
 # Step 2: Install JS dependencies
-echo "[2/5] Installing dependencies..."
+echo "[2/4] Installing dependencies..."
 bun install
 echo ""
 
 # Step 3: Run checks
-echo "[3/5] Running typecheck..."
+echo "[3/4] Running typecheck..."
 bun run typecheck
 echo "  Typecheck passed."
 echo ""
 
 # Step 4: Choose target
-echo "[4/5] Select build target:"
+echo "[4/4] Select build target:"
 echo ""
-echo "  1) Physical device (plugged in via USB)"
+echo "  1) Physical device (USB) - first time setup"
 echo "  2) Simulator"
 echo ""
 read -rp "Choice [1/2]: " choice
@@ -52,12 +52,17 @@ case "${choice}" in
     echo ""
     read -rp "Press Enter when ready..."
     echo ""
-    echo "[5/5] Building for device..."
+    echo "Building for device..."
     npx expo run:ios --device
+    echo ""
+    echo "Build installed. For future JS-only changes, skip this script and run:"
+    echo "  npx expo start --dev-client"
+    echo ""
+    echo "Your phone will connect to Metro over WiFi - no cable needed."
     ;;
   2)
     echo ""
-    echo "[5/5] Building for simulator..."
+    echo "Building for simulator..."
     npx expo run:ios
     ;;
   *)

@@ -12,21 +12,38 @@ const API_KEY =
     ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
     : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 
-export async function initializePurchases() {
+let isInitialized = false;
+
+export async function initializePurchases(): Promise<boolean> {
   if (!API_KEY) {
     console.warn('RevenueCat API key not set for platform:', Platform.OS);
-    return;
+    return false;
   }
   Purchases.setLogLevel(LOG_LEVEL.DEBUG);
   Purchases.configure({ apiKey: API_KEY });
+  isInitialized = true;
+  return true;
+}
+
+export function isPurchasesInitialized(): boolean {
+  return isInitialized;
 }
 
 export async function loginUser(userId: string) {
+  if (!isInitialized) return;
   await Purchases.logIn(userId);
 }
 
 export async function logoutUser() {
-  await Purchases.logOut();
+  if (!isInitialized) return;
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    if (!customerInfo.originalAppUserId.startsWith('$RCAnonymousID:')) {
+      await Purchases.logOut();
+    }
+  } catch {
+    // SDK not ready or already anonymous - safe to ignore
+  }
 }
 
 export async function getOfferings(): Promise<PurchasesOfferings | null> {

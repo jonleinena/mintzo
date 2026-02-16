@@ -1,8 +1,25 @@
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { ExamPart } from "@/types/exam";
 import { useSubscriptionGate } from "@/hooks/useSubscriptionGate";
+import { supabase } from "@/services/supabase/client";
+import { useAuthStore } from "@/stores/authStore";
+import { useState } from "react";
+
+const FREE_TRIAL_KEY = "mintzo_free_trial_used";
+
+function generateLocalId(): string {
+  // Simple random ID for local-only sessions (not stored in DB)
+  const chars = "abcdef0123456789";
+  const segments = [8, 4, 4, 4, 12];
+  return segments
+    .map((len) =>
+      Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
+    )
+    .join("-");
+}
 
 const PART_INFO: Record<
   ExamPart,
@@ -65,24 +82,82 @@ export default function ExamPartScreen() {
   }>();
   const router = useRouter();
   const { requirePremium } = useSubscriptionGate();
+  const { user } = useAuthStore();
   const info = PART_INFO[part as ExamPart] ?? PART_INFO.part1;
   const isPart1 = part === "part1";
+  const [isStarting, setIsStarting] = useState(false);
 
-  const handleStart = () => {
-    // Parts 2/3/4 require premium
-    if (!isPart1) {
-      const allowed = requirePremium(`/exam/session/${Date.now()}`);
+  const handleStart = async () => {
+    if (isStarting) return;
+
+    const examLevel = level ? String(level).toUpperCase() : "B2";
+    const examPart = part ?? "part1";
+
+    if (isPart1) {
+      // Part 1 gating: free for one unauthed run, then auth + paywall
+      const freeTrialUsedLocally = await AsyncStorage.getItem(FREE_TRIAL_KEY);
+      const freeTrialUsed = user?.hasUsedFreeTrial || freeTrialUsedLocally === "true";
+
+      if (freeTrialUsed) {
+        // Free trial consumed - require auth + premium
+        if (!user) {
+          router.push("/(auth)/register" as any);
+          return;
+        }
+        const allowed = requirePremium("/exam");
+        if (!allowed) return;
+      }
+    } else {
+      // Parts 2/3/4 always require auth + premium
+      if (!user) {
+        router.push("/(auth)/register" as any);
+        return;
+      }
+      const allowed = requirePremium("/exam");
       if (!allowed) return;
     }
 
-    const sessionId = Date.now().toString();
-    router.push({
-      pathname: `/exam/session/${sessionId}` as any,
-      params: {
-        level: level ? String(level).toUpperCase() : "B2",
-        part: part ?? "part1",
-      },
-    });
+    setIsStarting(true);
+
+    try {
+      if (user) {
+        // Authenticated: create DB session for grading
+        const { data: session, error } = await supabase
+          .from("exam_sessions")
+          .insert({
+            user_id: user.id,
+            level: examLevel,
+            session_type: "single_part",
+            parts_practiced: [examPart],
+            is_free_trial: isPart1 && !user.hasUsedFreeTrial,
+          })
+          .select("id")
+          .single();
+
+        if (error || !session) {
+          console.error("Failed to create exam session:", error);
+          setIsStarting(false);
+          return;
+        }
+
+        router.push({
+          pathname: `/exam/session/${session.id}` as any,
+          params: { level: examLevel, part: examPart },
+        });
+      } else {
+        // Unauthenticated free trial: local-only session
+        const localId = generateLocalId();
+        router.push({
+          pathname: `/exam/session/${localId}` as any,
+          params: { level: examLevel, part: examPart, freeTrial: "true" },
+        });
+      }
+    } catch (err) {
+      console.error("Failed to start exam:", err);
+      setIsStarting(false);
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   return (
@@ -175,7 +250,8 @@ export default function ExamPartScreen() {
       <View className="px-5 pb-4">
         <Pressable
           onPress={handleStart}
-          className="items-center rounded-lg border-2 border-black bg-blue-400 py-4"
+          disabled={isStarting}
+          className={`items-center rounded-lg border-2 border-black py-4 ${isStarting ? "bg-gray-300" : "bg-blue-400"}`}
           style={{
             shadowColor: "#000",
             shadowOffset: { width: 4, height: 4 },
@@ -184,7 +260,9 @@ export default function ExamPartScreen() {
             elevation: 4,
           }}
         >
-          <Text className="text-xl font-black text-black">Start</Text>
+          <Text className="text-xl font-black text-black">
+            {isStarting ? "Starting..." : "Start"}
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
