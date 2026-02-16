@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { useSubscriptionGate } from "@/hooks/useSubscriptionGate";
 import type { ExamPart } from "@/types/exam";
 
 const PARTS_INFO: Record<
@@ -42,16 +43,28 @@ const PARTS_INFO: Record<
 function PartCard({
   part,
   level,
+  locked,
+  onLockedPress,
 }: {
   part: ExamPart;
   level: string;
+  locked: boolean;
+  onLockedPress: () => void;
 }) {
   const router = useRouter();
   const info = PARTS_INFO[part];
 
+  const handlePress = () => {
+    if (locked) {
+      onLockedPress();
+      return;
+    }
+    router.push(`/exam/${level}/${part}`);
+  };
+
   return (
     <Pressable
-      onPress={() => router.push(`/exam/${level}/${part}`)}
+      onPress={handlePress}
       className={`${info.color} border-2 border-black rounded-lg p-5`}
       style={{
         shadowColor: "#000",
@@ -63,10 +76,12 @@ function PartCard({
     >
       <View className="flex-row items-start justify-between">
         <View className="bg-white border-2 border-black rounded-full w-12 h-12 items-center justify-center">
-          <Ionicons name={info.icon} size={22} color="#000" />
+          <Ionicons name={locked ? "lock-closed" : info.icon} size={22} color="#000" />
         </View>
         <View className="bg-white border-2 border-black rounded-full px-3 py-1">
-          <Text className="text-xs font-bold">{info.duration}</Text>
+          <Text className="text-xs font-bold">
+            {locked ? "Premium" : info.duration}
+          </Text>
         </View>
       </View>
       <Text className="text-lg font-black mt-3">{info.title}</Text>
@@ -77,6 +92,7 @@ function PartCard({
 
 export default function PracticeScreen() {
   const { targetExamLevel } = useSettingsStore();
+  const { isPremium, requirePremium } = useSubscriptionGate();
   const router = useRouter();
 
   // C2 has 3 parts, B2/C1 have 4
@@ -84,6 +100,14 @@ export default function PracticeScreen() {
     targetExamLevel === "C2"
       ? ["part1", "part2", "part3"]
       : ["part1", "part2", "part3", "part4"];
+
+  const handleFullExam = () => {
+    if (!isPremium) {
+      requirePremium(`/exam/${targetExamLevel}/part1`);
+      return;
+    }
+    router.push(`/exam/${targetExamLevel}/part1`);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
@@ -99,7 +123,7 @@ export default function PracticeScreen() {
 
         {/* Full Exam Button */}
         <Pressable
-          onPress={() => router.push(`/exam/${targetExamLevel}/part1`)}
+          onPress={handleFullExam}
           className="bg-brand-violet border-2 border-black rounded-lg p-5 mb-6"
           style={{
             shadowColor: "#000",
@@ -118,7 +142,11 @@ export default function PracticeScreen() {
                 All {parts.length} parts - ~14 minutes
               </Text>
             </View>
-            <Ionicons name="play-circle" size={40} color="#FFF" />
+            <Ionicons
+              name={isPremium ? "play-circle" : "lock-closed"}
+              size={40}
+              color="#FFF"
+            />
           </View>
         </Pressable>
 
@@ -130,6 +158,10 @@ export default function PracticeScreen() {
               key={part}
               part={part}
               level={targetExamLevel}
+              locked={!isPremium && part !== "part1"}
+              onLockedPress={() =>
+                requirePremium(`/exam/${targetExamLevel}/${part}`)
+              }
             />
           ))}
         </View>

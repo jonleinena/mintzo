@@ -17,5 +17,7 @@ export const ENTITLEMENTS = {
 
 export const PRODUCTS = {
   MONTHLY: 'mintzo_monthly',
+  THREE_MONTH: 'mintzo_3month',
+  SIX_MONTH: 'mintzo_6month',
   YEARLY: 'mintzo_yearly',
 } as const;

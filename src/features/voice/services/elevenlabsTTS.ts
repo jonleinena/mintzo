@@ -4,7 +4,9 @@ import { supabase } from '@/services/supabase/client';
 import type { ExamLevel, ExamPart } from '@/types/exam';
 
 const ELEVENLABS_API_KEY = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY ?? '';
-const DEFAULT_VOICE_ID = process.env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID ?? '';
+// "Rachel" - a clear, natural English voice suitable for exam questions
+const FALLBACK_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+const DEFAULT_VOICE_ID = process.env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID || FALLBACK_VOICE_ID;
 const API_BASE = 'https://api.elevenlabs.io/v1';
 
 interface VoiceSettings {
@@ -55,9 +57,6 @@ function arrayBufferToBase64(input: ArrayBuffer): string {
 function ensureConfig() {
   if (!ELEVENLABS_API_KEY) {
     throw new Error('Missing EXPO_PUBLIC_ELEVENLABS_API_KEY');
-  }
-  if (!DEFAULT_VOICE_ID) {
-    throw new Error('Missing EXPO_PUBLIC_ELEVENLABS_VOICE_ID');
   }
 }
 
@@ -122,7 +121,7 @@ export async function uploadToCache(
     const file = new File(localAudioPath);
     const base64Audio = await file.base64();
 
-    const { data, error } = await supabase.functions.invoke('generate-and-cache-audio', {
+    const { data, error } = await supabase.functions.invoke('cache-audio', {
       body: {
         questionId,
         level,

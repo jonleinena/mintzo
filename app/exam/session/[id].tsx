@@ -2,12 +2,17 @@ import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BreathingOrb } from "@/components/exam/BreathingOrb";
 import { ConversationScreen } from "@/components/exam/ConversationScreen";
-import { useEffect, useMemo, useState } from "react";
+import { Part2LongTurn } from "@/components/exam/Part2LongTurn";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScriptedExam } from "@/features/voice/hooks/useScriptedExam";
-import type { ExamLevel, ExamPart } from "@/types/exam";
+import type { ConversationTurn, ExamLevel, ExamPart } from "@/types/exam";
 import { getRandomQuestions } from "@/services/api/examContentApi";
+import { gradeExam } from "@/services/api/voiceApi";
+
+const FREE_TRIAL_KEY = "mintzo_free_trial_used";
 
 function normalizeLevel(value?: string): ExamLevel {
   const upper = value?.toUpperCase();
@@ -25,12 +30,14 @@ function normalizePart(value?: string): ExamPart {
 }
 
 export default function ExamSessionScreen() {
-  const { id, level, part } = useLocalSearchParams<{
+  const { id, level, part, freeTrial } = useLocalSearchParams<{
     id: string;
     level?: string;
     part?: string;
+    freeTrial?: string;
   }>();
   const router = useRouter();
+  const isFreeTrial = freeTrial === "true";
 
   const examLevel = useMemo(() => normalizeLevel(level), [level]);
   const examPart = useMemo(() => normalizePart(part), [part]);
@@ -41,14 +48,46 @@ export default function ExamSessionScreen() {
   >([]);
   const [isLoading, setIsLoading] = useState(isScripted);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isGrading, setIsGrading] = useState(false);
+  const transcriptsRef = useRef<Record<string, string>>({});
+
+  const handleExamComplete = useCallback(
+    async (fullTranscript: ConversationTurn[]) => {
+      // Convert transcript array to string
+      const transcriptText = fullTranscript
+        .map((turn) => `${turn.role}: ${turn.text}`)
+        .join("\n");
+
+      // Store transcript for this part
+      transcriptsRef.current[examPart] = transcriptText;
+
+      if (isFreeTrial) {
+        // Free trial: mark as used, skip grading, redirect to register
+        await AsyncStorage.setItem(FREE_TRIAL_KEY, "true");
+        router.replace("/(auth)/register" as any);
+        return;
+      }
+
+      // Grade the exam
+      setIsGrading(true);
+      try {
+        await gradeExam(id, transcriptsRef.current, examLevel);
+      } catch (error) {
+        console.error("Grading failed:", error);
+        // Still navigate to results even if grading fails
+      } finally {
+        setIsGrading(false);
+        router.replace(`/exam/session/results/${id}`);
+      }
+    },
+    [id, examLevel, examPart, isFreeTrial, router],
+  );
 
   const { state, startExam, stopExam } = useScriptedExam({
     level: examLevel,
     part: examPart,
     questions,
-    onComplete: (_fullTranscript) => {
-      router.replace(`/exam/session/results/${id}`);
-    },
+    onComplete: handleExamComplete,
     onError: (error) => {
       setLoadError(error.message);
     },
@@ -97,39 +136,47 @@ export default function ExamSessionScreen() {
     };
   }, [isLoading, isScripted, questions.length, startExam, stopExam]);
 
-  const handleEndExam = () => {
+  const handleEndExam = async () => {
+    if (isFreeTrial) {
+      await AsyncStorage.setItem(FREE_TRIAL_KEY, "true");
+      router.replace("/(auth)/register" as any);
+      return;
+    }
     router.replace(`/exam/session/results/${id}`);
   };
+
+  const handlePart3Complete = useCallback(
+    async (transcript: string) => {
+      transcriptsRef.current["part3"] = transcript;
+      setIsGrading(true);
+      try {
+        await gradeExam(id, transcriptsRef.current, examLevel);
+      } catch (error) {
+        console.error("Grading failed:", error);
+      } finally {
+        setIsGrading(false);
+        router.replace(`/exam/session/results/${id}`);
+      }
+    },
+    [id, examLevel, router],
+  );
 
   if (examPart === "part3") {
     return (
       <ConversationScreen
         level={examLevel}
         part={examPart}
-        onComplete={() => handleEndExam()}
+        onComplete={handlePart3Complete}
       />
     );
   }
 
-  if (!isScripted) {
+  if (examPart === "part2") {
     return (
-      <View className="flex-1 bg-black">
-        <StatusBar hidden />
-        <SafeAreaView className="flex-1 items-center justify-center px-6">
-          <Text className="text-xl font-semibold text-white">
-            This part is not wired yet.
-          </Text>
-          <Text className="mt-3 text-center text-base text-gray-400">
-            We will add Part 2 visuals and recording next. For now, use Part 1 or Part 3.
-          </Text>
-          <Pressable
-            onPress={handleEndExam}
-            className="mt-8 rounded-lg border-2 border-white/40 bg-white/10 px-6 py-3"
-          >
-            <Text className="text-base font-bold text-white">Back</Text>
-          </Pressable>
-        </SafeAreaView>
-      </View>
+      <Part2LongTurn
+        level={examLevel}
+        onComplete={handleExamComplete}
+      />
     );
   }
 
@@ -139,7 +186,14 @@ export default function ExamSessionScreen() {
       <SafeAreaView className="flex-1 items-center justify-center px-6">
         <BreathingOrb isActive isSpeaking={state === "examiner_speaking"} />
 
-        {isLoading ? (
+        {isGrading ? (
+          <View className="mt-10 items-center">
+            <ActivityIndicator color="#ffffff" />
+            <Text className="mt-3 text-base text-gray-300">
+              Grading your exam...
+            </Text>
+          </View>
+        ) : isLoading ? (
           <View className="mt-10 items-center">
             <ActivityIndicator color="#ffffff" />
             <Text className="mt-3 text-base text-gray-300">

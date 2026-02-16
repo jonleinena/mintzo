@@ -46,13 +46,7 @@
       "expo-router",
       "expo-secure-store",
       "@livekit/react-native-expo-plugin",
-      "@config-plugins/react-native-webrtc",
-      [
-        "expo-notifications",
-        {
-          "sounds": []
-        }
-      ]
+      "@config-plugins/react-native-webrtc"
     ],
     "experiments": {
       "typedRoutes": true

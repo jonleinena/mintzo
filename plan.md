@@ -17,75 +17,66 @@
 
 ### 2.1 B2 First (FCE) Speaking Test
 
-| Part | Name | Duration | Format |
-|------|------|----------|--------|
-| **Part 1** | Interview | 2 min | Examiner asks personal questions about experiences, circumstances, future plans |
-| **Part 2** | Long Turn | 4 min | Two photographs with written prompt. Speak for 1 min, then 30-sec response to partner's photos |
-| **Part 3** | Collaborative Task | 3 min | Written prompts + question. 2 min discussion + 1 min reaching decision together |
-| **Part 4** | Discussion | 4 min | Examiner-led discussion expanding on Part 3 topics |
+| Part | Name | Timing | Format |
+|------|------|--------|--------|
+| **Part 1** | Interview | 2 min | Conversation with the examiner; personal information, interests, studies, career topics |
+| **Part 2** | Long Turn | 1 min each + 30-sec response | Two photographs; Candidate A speaks for 1 minute, Candidate B comments (~30 sec). Then roles swap with a different photo set |
+| **Part 3** | Collaborative Task | 3 min (2 + 1) | Discussion with written prompts; 2 minutes discussion + 1 minute decision-making |
+| **Part 4** | Discussion | 4 min | Examiner-led discussion expanding on Part 3 themes |
 
-**Total Duration:** 14 minutes (pair of candidates)
+**Total Duration:** 14 minutes (pair) / 20 minutes (group of three)  
 **Examiners:** 2 (interlocutor + assessor)
 
 ### 2.2 C1 Advanced (CAE) Speaking Test
 
-| Part | Name | Duration | Format |
-|------|------|----------|--------|
-| **Part 1** | Interview | 2 min | Personal information, interests, studies, career questions |
-| **Part 2** | Long Turn | 4 min | THREE photographs (discuss TWO). 1 min speaking + 30-sec response |
-| **Part 3** | Collaborative Task | 3 min | Written prompts leading to collaborative decision (2 min + 1 min) |
-| **Part 4** | Discussion | 5 min | Extended discussion on Part 3 themes with examiner questions |
+| Part | Name | Timing | Format |
+|------|------|--------|--------|
+| **Part 1** | Interview | 2 min | Conversation with the examiner; personal information, interests, studies, career topics |
+| **Part 2** | Long Turn | 1 min each + 30-sec response | Three photographs; candidate speaks about two for 1 minute, other candidate comments (~30 sec). Then roles swap with a different set |
+| **Part 3** | Collaborative Task | 3 min (2 + 1) | Discussion with written prompts; 2 minutes discussion + 1 minute decision-making |
+| **Part 4** | Discussion | 5 min | Extended discussion based on Part 3 topics, led by examiner questions |
 
-**Total Duration:** 15 minutes (pair) / 23 minutes (group of 3)
+**Total Duration:** 15 minutes (pair) / 23 minutes (group of three)  
 **Examiners:** 2 (interlocutor + assessor)
 
 ### 2.3 C2 Proficiency (CPE) Speaking Test
 
-| Part | Name | Duration | Format |
-|------|------|----------|--------|
-| **Part 1** | Interview | 3 min | General conversation, self-introduction, opinions on general topics |
-| **Part 2** | Collaborative Task | 4 min | Photos as basis for collaborative discussion task |
-| **Part 3** | Long Turn + Discussion | 8 min | 2-min individual speech from prompt card, then discussion on themes |
+| Part | Name | Timing | Format |
+|------|------|--------|--------|
+| **Part 1** | Interview | 2 min | Conversation with the examiner; each candidate answers questions in turn |
+| **Part 2** | Collaborative Task | 4 min | Reaction question to pictures (1 min) + decision-making task with partner |
+| **Part 3** | Long Turn + Discussion | 10 min | 2-minute long turn each from a prompt card; partner comments; examiner asks follow-up; then a shared discussion (~6 min) |
 
-**Total Duration:** 16 minutes (pair)
-**Note:** CPE has 3 parts, not 4 like B2/C1
+**Total Duration:** 16 minutes (pair) / 24 minutes (group of three)  
+**Note:** C2 has 3 parts (not 4 like B2/C1)
 
 ### 2.4 Assessment Criteria (All Levels)
 
-Cambridge uses **5 assessment criteria**, each scored **0-5** in **0.5 increments**:
+Cambridge uses **5 analytical criteria** plus a **Global Achievement** score:
 
 | Criterion | What It Measures |
 |-----------|------------------|
-| **Grammar & Vocabulary** | Range and accuracy of grammatical structures; appropriacy of vocabulary |
+| **Grammatical Resource** | Range and accuracy of grammatical structures |
+| **Lexical Resource** | Range and appropriacy of vocabulary |
 | **Discourse Management** | Coherence, cohesion, relevance, extent of contributions, organization of ideas |
 | **Pronunciation** | Intelligibility, intonation, word/sentence stress, articulation of sounds |
 | **Interactive Communication** | Initiating/responding, turn-taking, development of interaction, sensitivity to partner |
 | **Global Achievement** | Overall effectiveness of communication (assessed by interlocutor) |
 
-**Scoring Structure:**
-- Assessor marks: Grammar, Vocabulary, Discourse, Pronunciation, Interactive Communication
-- Interlocutor marks: Global Achievement only
-- Each criterion doubled for total score calculation
-- Maximum raw score: 75 marks → converted to Cambridge Scale (142-210 for C1)
+**Scoring Structure (official roles):**
+- **Assessor** marks the five analytical criteria
+- **Interlocutor** marks **Global Achievement**
+- Marks are awarded across **all parts** of the test
 
-**Band Descriptors (Band 5 = Highest):**
-
-| Band | Description |
-|------|-------------|
-| **5** | Full operational command, native-like proficiency, very minor errors only |
-| **4** | Good control, occasional errors, effective communication |
-| **3** | Satisfactory control, some errors but generally successful communication |
-| **2** | Limited control, frequent errors affecting communication |
-| **1** | Very limited, basic phrases only |
-| **0** | No assessable language |
+Use Cambridge’s official assessment scales for model training and feedback.
 
 ### 2.5 Key Differences Between Levels
 
 | Aspect | B2 First | C1 Advanced | C2 Proficiency |
 |--------|----------|-------------|----------------|
 | Parts | 4 | 4 | 3 |
-| Duration | 14 min | 15 min | 16 min |
-| Part 2 Photos | 2 photos | 3 photos (pick 2) | Photos for collaboration |
+| Duration | 14 min (20 for 3) | 15 min (23 for 3) | 16 min (24 for 3) |
+| Part 2 Visuals | 2 photos | 3 photos (pick 2) | Reaction to pictures + decision task |
 | Complexity | Familiar topics | Abstract topics | Sophisticated discourse |
 | Vocabulary | Common collocations | Less common vocabulary | Near-native range |
 | Grammar | Complex structures | Wide range | Full flexibility |
@@ -195,19 +186,19 @@ interface User {
 
 ⚠️ **Cost Optimization Strategy:** We use a **hybrid architecture** to minimize API costs while maintaining quality.
 
-| Exam Part | Type | Implementation | Why |
-|-----------|------|----------------|-----|
-| **Part 1** (Interview) | Scripted Q&A | **TTS + VAD + STT** | Predetermined questions, no real dialogue needed |
-| **Part 2** (Long Turn) | Monologue | **TTS + Recording + STT** | User speaks uninterrupted, no conversation |
-| **Part 3** (Collaborative) | Real Dialogue | **ElevenLabs Conversational AI** | Requires natural back-and-forth, turn-taking |
-| **Part 4** (Discussion) | Semi-scripted | **TTS + VAD + STT** | Follow-up questions can be branched/scripted |
+| Exam Segment | Type | Implementation | Why |
+|--------------|------|----------------|-----|
+| **Interview** (B2/C1 Part 1, C2 Part 1) | Scripted Q&A | **TTS + VAD + STT** | Predetermined questions, no real dialogue needed |
+| **Long Turn** (B2/C1 Part 2, C2 Part 3 long turns) | Timed monologue + partner comment | **TTS + Recording + STT + LLM partner reply** | Fixed timing; partner response can be generated offline |
+| **Collaborative Task** (B2/C1 Part 3, C2 Part 2) | Real dialogue | **ElevenLabs Conversational AI (Partner)** | Requires negotiation, turn-taking, decision-making |
+| **Discussion** (B2/C1 Part 4, C2 Part 3 discussion) | Semi-scripted multi-speaker | **TTS + VAD + STT + LLM partner reply** | Examiner-led questions; partner replies can be generated without real-time agent |
 
 **Cost Comparison:**
 
 | Approach | Cost per 10 min | Best For |
 |----------|-----------------|----------|
-| **Conversational AI Agent** | ~$0.88-1.20 | Part 3 (real dialogue) |
-| **TTS + STT + VAD** | ~$0.15 | Parts 1, 2, 4 (scripted) |
+| **Conversational AI Agent** | ~$0.88-1.20 | Collaborative task (B2/C1 Part 3, C2 Part 2) |
+| **TTS + STT + VAD** | ~$0.15 | Interview, long turns, and examiner-led discussion |
 
 **Concurrency Analysis (Agents):**
 
@@ -221,17 +212,17 @@ Per [ElevenLabs pricing](https://elevenlabs.io/pricing) and [community discussio
 | Pro | $99/mo | 20 | ~6,600 |
 | Scale | $330/mo | 30 | ~10,000 |
 
-*Estimated active users before hitting peak-hour concurrency limits (assumes Part 3 only, ~3 min/session, 10% peak hour traffic)
+*Estimated active users before hitting peak-hour concurrency limits (assumes collaborative task only, ~3–4 min/session, 10% peak hour traffic)
 
 **Why concurrency is manageable:**
-1. **Only Part 3 uses agents** - other parts use cheap TTS+STT
-2. **Part 3 is short** (~3 minutes per user)
+1. **Only the collaborative task uses agents** - other parts use cheaper TTS+STT
+2. **Collaborative tasks are short** (~3–4 minutes per user)
 3. **Users are globally distributed** - peak hours spread across timezones
 4. **Not everyone practices daily** - sessions spread throughout week
 
-**Example:** 1,000 active users → ~3 concurrent Part 3 sessions at peak → **Creator tier ($11/mo) is sufficient**
+**Example:** 1,000 active users → ~3 concurrent collaborative sessions at peak → **Creator tier ($11/mo) is sufficient**
 
-#### Architecture A: TTS + VAD + STT (Parts 1, 2, 4)
+#### Architecture A: TTS + VAD + STT (Interview, Long Turn, Discussion)
 
 Uses [LiveKit VAD](https://docs.livekit.io/agents/start/voice-ai-quickstart/) for voice activity detection + [ElevenLabs TTS API](https://elevenlabs.io/docs/api-reference/text-to-speech/convert) + ElevenLabs STT.
 
@@ -284,45 +275,76 @@ TTS: "Thank you. Let's move on to the next part."
 Transcript → Grading
 ```
 
-**Part 2 (Long Turn) - Monologue Flow:**
+**B2/C1 Part 2 (Long Turn) - Timed Monologue Flow:**
 ```
-Display photos to user
+Display photos to user (Set A)
     ↓
-TTS: "Compare these photos and say which person..."
+TTS (Interlocutor): "Compare these photos and say..."
     ↓
-Start 60-second timer
+Start 60-second timer → record user audio
     ↓
-Record user audio (local recording)
+STT: Transcribe user response
     ↓
-Timer ends OR VAD detects extended silence
+LLM generates partner comment (30 sec) → TTS (Partner voice)
     ↓
-STT: Transcribe full response
+Display photos for AI candidate (Set B)
     ↓
-TTS: Brief follow-up question (30 sec)
+TTS (Interlocutor): "Now, [Partner Name], compare these..."
     ↓
-Record + STT follow-up response
+LLM generates AI long turn (1 min) → TTS (Partner voice)
+    ↓
+TTS (Interlocutor): "What do you think?"
+    ↓
+Start 30-second timer → record user comment
+    ↓
+STT: Transcribe user comment
     ↓
 Transcript → Grading
 ```
 
-**Part 4 (Discussion) - Semi-Scripted Flow:**
+**B2/C1 Part 4 (Discussion) - Semi-Scripted Multi-Speaker Flow:**
 ```
 Load discussion questions based on Part 3 topic
     ↓
-TTS: "Do you think [topic] is important in modern society?"
+TTS (Interlocutor): "Do you think [topic] is important in modern society?"
     ↓
-VAD: Detect user response complete
+VAD: Detect user response complete → STT
     ↓
-STT: Transcribe
+LLM generates partner response → TTS (Partner voice)
     ↓
-(Optional) LLM picks contextual follow-up from question bank
+(Optional) LLM selects contextual follow-up
     ↓
-Repeat for 4-5 minutes
+Repeat for 4–5 minutes
     ↓
 Transcript → Grading
 ```
 
-#### Architecture B: Conversational AI Agent (Part 3 Only)
+**C2 Part 3 (Long Turn + Discussion) - Timed Multi-Speaker Flow:**
+```
+TTS (Interlocutor): Present prompt card + task (Candidate A)
+    ↓
+Start 2-minute timer → record user long turn
+    ↓
+STT: Transcribe user response
+    ↓
+LLM generates partner comment (~30 sec) → TTS (Partner voice)
+    ↓
+TTS (Interlocutor): Short follow-up question to user
+    ↓
+Record brief response → STT
+    ↓
+TTS (Interlocutor): Present prompt card + task (Candidate B)
+    ↓
+LLM generates AI long turn (2 min) → TTS (Partner voice)
+    ↓
+TTS (Interlocutor): "What do you think?" → record user comment (30 sec) → STT
+    ↓
+6-minute discussion with examiner prompts + partner replies (LLM → TTS)
+    ↓
+Transcript → Grading
+```
+
+#### Architecture B: Conversational AI Agent (Collaborative Task Only)
 
 Uses [ElevenLabs Conversational AI](https://elevenlabs.io/docs/agents-platform/guides/integrations/expo-react-native) for natural back-and-forth dialogue.
 
@@ -358,30 +380,33 @@ Uses [ElevenLabs Conversational AI](https://elevenlabs.io/docs/agents-platform/g
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Part 3 (Collaborative Task) Flow:**
+**Collaborative Task Flow (B2/C1 Part 3, C2 Part 2):**
 ```
-Initialize ElevenLabs Conversation Agent
-    - System prompt: Cambridge examiner + collaborative partner persona
-    - Visual prompts loaded (if applicable)
+TTS (Interlocutor): Task instructions + prompt card/pictures
     ↓
-Real-time voice conversation via WebRTC
+Initialize ElevenLabs Conversation Agent (Partner persona)
+    - System prompt: cooperative candidate, not the examiner
+    - Goal: explore options, negotiate, reach a decision
+    ↓
+Real-time voice conversation via WebRTC (user ↔ partner)
     - Natural turn-taking
-    - Agent responds dynamically to user ideas
-    - Guides discussion toward decision-making
+    - Partner builds on user ideas
+    - Focused on decision-making
     ↓
-Agent manages timing (~3 min)
+At T+2 min: TTS (Interlocutor) prompts decision (B2/C1)
+At T+1 min: decision prompt for C2 Part 2
     ↓
-Agent: "So, what have we decided?"
+Partner steers toward a final decision
     ↓
 Session ends
     ↓
 Full transcript → LLM Grading
 ```
 
-**Why Part 3 Needs Conversational AI:**
+**Why the Collaborative Task Needs Conversational AI:**
 - Requires **natural interruptions** ("Oh, I see what you mean, but...")
-- User and examiner must **build on each other's ideas**
-- Needs **dynamic responses** based on user's actual suggestions
+- User and **partner candidate** must **build on each other's ideas**
+- Needs **dynamic responses** based on the user's actual suggestions
 - Must reach a **collaborative decision** together
 - Scripted approach would feel robotic and unrealistic
 
@@ -452,7 +477,7 @@ mintzo/
 │   │   │   └── services/examService.ts
 │   │   ├── voice/
 │   │   │   ├── hooks/
-│   │   │   │   ├── useConversationalAI.ts    # Part 3 only - ElevenLabs Agent
+│   │   │   │   ├── useConversationalAI.ts    # Collaborative task only - ElevenLabs Partner
 │   │   │   │   ├── useScriptedExam.ts        # Parts 1, 2, 4 - TTS+VAD+STT
 │   │   │   │   ├── useVoiceActivityDetection.ts  # LiveKit VAD wrapper
 │   │   │   │   ├── useAudioPlayback.ts       # TTS audio playback
@@ -546,8 +571,8 @@ mintzo/
 ### 4.4 Voice Integration (Hybrid Architecture)
 
 This section provides the complete implementation guide for the **hybrid voice architecture**:
-- **Part 3 (Collaborative)**: ElevenLabs Conversational AI Agent via WebRTC
-- **Parts 1, 2, 4**: ElevenLabs TTS API + STT API + LiveKit VAD
+- **Collaborative Task (B2/C1 Part 3, C2 Part 2)**: ElevenLabs Conversational AI **Partner** via WebRTC
+- **Interview, Long Turn, Discussion**: ElevenLabs TTS API + STT API + LiveKit VAD + LLM partner replies
 
 **References:**
 - [ElevenLabs Expo React Native Integration](https://elevenlabs.io/docs/agents-platform/guides/integrations/expo-react-native)
@@ -557,7 +582,7 @@ This section provides the complete implementation guide for the **hybrid voice a
 #### 4.4.1 Dependencies Installation
 
 ```bash
-# ElevenLabs Conversational AI SDK (for Part 3)
+# ElevenLabs Conversational AI SDK (for Collaborative Task)
 npx expo install @elevenlabs/react-native @livekit/react-native @livekit/react-native-webrtc @config-plugins/react-native-webrtc @livekit/react-native-expo-plugin livekit-client
 
 # Audio recording and playback
@@ -612,14 +637,14 @@ legacy-peer-deps=true
 #### 4.4.3 Environment Variables
 
 ```bash
-# ElevenLabs API Key (for TTS/STT - Parts 1, 2, 4)
+# ElevenLabs API Key (for TTS/STT - Interview, Long Turn, Discussion)
 EXPO_PUBLIC_ELEVENLABS_API_KEY=<your_api_key>
 EXPO_PUBLIC_ELEVENLABS_VOICE_ID=<british_examiner_voice_id>
 
-# ElevenLabs Conversational AI Agents (Part 3 ONLY - saves costs!)
-EXPO_PUBLIC_ELEVENLABS_AGENT_ID_B2_PART3=<agent_id>
-EXPO_PUBLIC_ELEVENLABS_AGENT_ID_C1_PART3=<agent_id>
-EXPO_PUBLIC_ELEVENLABS_AGENT_ID_C2_PART3=<agent_id>
+# ElevenLabs Conversational AI Agents (Collaborative Task Only - saves costs!)
+EXPO_PUBLIC_ELEVENLABS_AGENT_ID_B2_COLLAB=<agent_id>
+EXPO_PUBLIC_ELEVENLABS_AGENT_ID_C1_COLLAB=<agent_id>
+EXPO_PUBLIC_ELEVENLABS_AGENT_ID_C2_COLLAB=<agent_id>
 
 # Supabase
 EXPO_PUBLIC_SUPABASE_URL=<your_supabase_url>
@@ -632,7 +657,7 @@ EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=<android_key>
 
 ---
 
-## 4.5 TTS + VAD + STT Implementation (Parts 1, 2, 4)
+## 4.5 TTS + VAD + STT Implementation (Interview, Long Turn, Discussion)
 
 This approach is **~85% cheaper** than Conversational AI and has **no concurrency limits**.
 
@@ -1021,8 +1046,8 @@ export async function getRandomPart2Content(
   return data[index];
 }
 
-// Fetch random Part 3 content (collaborative task)
-export async function getRandomPart3Content(
+// Fetch random collaborative task content (B2/C1 Part 3, C2 Part 2)
+export async function getRandomCollaborativeTaskContent(
   level: ExamLevel
 ): Promise<Part3Content> {
   const { data, error } = await supabase
@@ -1043,17 +1068,22 @@ export async function getRandomPart3Content(
 export async function constructExamSession(level: ExamLevel): Promise<{
   part1Questions: ExamQuestion[];
   part2Content: Part2Content;
-  part3Content: Part3Content;
-  part4Questions: ExamQuestion[];
+  collaborativeTaskContent: Part3Content;
+  part4Questions?: ExamQuestion[];
 }> {
-  const [part1Questions, part2Content, part3Content, part4Questions] = await Promise.all([
+  const [part1Questions, part2Content, collaborativeTaskContent, part4Questions] = await Promise.all([
     getRandomQuestions(level, 'part1', 6),
     getRandomPart2Content(level),
-    getRandomPart3Content(level),
-    getRandomQuestions(level, 'part4', 5),
+    getRandomCollaborativeTaskContent(level),
+    level === 'C2' ? Promise.resolve([]) : getRandomQuestions(level, 'part4', 5),
   ]);
 
-  return { part1Questions, part2Content, part3Content, part4Questions };
+  return {
+    part1Questions,
+    part2Content,
+    collaborativeTaskContent,
+    part4Questions: level === 'C2' ? undefined : part4Questions,
+  };
 }
 
 // Increment usage count after exam
@@ -1067,9 +1097,9 @@ export async function markContentUsed(contentIds: string[], table: string): Prom
 
 ---
 
-## 4.6 Conversational AI Implementation (Part 3 Only)
+## 4.6 Conversational AI Implementation (Collaborative Task Only)
 
-Part 3 (Collaborative Task) **requires** real conversational AI because:
+The **collaborative task** (B2/C1 Part 3, C2 Part 2) **requires** real conversational AI because:
 - Natural back-and-forth dialogue
 - Dynamic responses to user ideas
 - Must reach collaborative decision together
@@ -1098,9 +1128,9 @@ export default function RootLayout() {
 }
 ```
 
-#### 4.6.2 Conversation Hook Implementation (Part 3 Only)
+#### 4.6.2 Conversation Hook Implementation (Collaborative Task Only)
 
-This hook is ONLY used for Part 3 (Collaborative Task). Parts 1, 2, and 4 use the scripted approach in Section 4.5.
+This hook is ONLY used for the collaborative task. Interview, long turns, and discussion use the scripted approach in Section 4.5.
 
 ```typescript
 // src/features/voice/hooks/useConversationalAI.ts
@@ -1127,16 +1157,16 @@ interface ConversationMessage {
   timestamp: Date;
 }
 
-// Part 3 agents ONLY - saves significant costs!
-const PART3_AGENT_IDS: Record<ExamLevel, string> = {
-  B2: process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID_B2_PART3!,
-  C1: process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID_C1_PART3!,
-  C2: process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID_C2_PART3!,
+// Collaborative task agents ONLY - saves significant costs!
+const COLLAB_AGENT_IDS: Record<ExamLevel, string> = {
+  B2: process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID_B2_COLLAB!,
+  C1: process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID_C1_COLLAB!,
+  C2: process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID_C2_COLLAB!,
 };
 
 export function useConversationalAI({
   level,
-  part,
+  collaborativeTaskContent,
   onTranscriptUpdate,
   onSessionEnd,
 }: UseConversationalAIProps) {
@@ -1181,9 +1211,9 @@ export function useConversationalAI({
   const startSession = useCallback(async (dynamicVariables?: Record<string, string>) => {
     if (isStarting) return;
 
-    const agentId = AGENT_IDS[level]?.[part];
+    const agentId = COLLAB_AGENT_IDS[level];
     if (!agentId) {
-      throw new Error(`No agent configured for ${level} ${part}`);
+      throw new Error(`No collaborative agent configured for ${level}`);
     }
 
     setIsStarting(true);
@@ -1195,7 +1225,8 @@ export function useConversationalAI({
         dynamicVariables: {
           platform: Platform.OS,
           examLevel: level,
-          examPart: part,
+          taskType: 'collaborative',
+          taskPrompt: collaborativeTaskContent ?? '',
           ...dynamicVariables,
         },
       });
@@ -1205,7 +1236,7 @@ export function useConversationalAI({
     } finally {
       setIsStarting(false);
     }
-  }, [conversation, level, part, isStarting]);
+  }, [conversation, level, isStarting]);
 
   const endSession = useCallback(async () => {
     try {
@@ -1249,7 +1280,7 @@ export function useConversationalAI({
 }
 ```
 
-#### 4.4.6 Exam Conversation Screen Component
+#### 4.6.3 Collaborative Task Screen Component
 
 ```tsx
 // src/components/exam/ConversationScreen.tsx
@@ -1261,13 +1292,13 @@ import type { ExamLevel, ExamPart } from '@/types/exam';
 
 interface ConversationScreenProps {
   level: ExamLevel;
-  part: ExamPart;
+  taskPrompt: string;
   onComplete: (transcript: string) => void;
 }
 
 export function ConversationScreen({ 
   level, 
-  part, 
+  taskPrompt,
   onComplete 
 }: ConversationScreenProps) {
   const {
@@ -1278,7 +1309,7 @@ export function ConversationScreen({
     canStart,
   } = useConversationalAI({
     level,
-    part,
+    collaborativeTaskContent: taskPrompt,
     onSessionEnd: onComplete,
   });
 
@@ -1443,42 +1474,34 @@ const styles = StyleSheet.create({
 
 #### 4.4.8 ElevenLabs Agent Configuration
 
-For each exam level and part combination, create a separate agent in the [ElevenLabs Agents Platform](https://elevenlabs.io/app/agents/agents):
+Create **one Conversational AI Partner agent per level** (B2/C1/C2).  
+The **interlocutor (examiner)** is handled by **scripted TTS in the app**, not the agent.
 
-**Agent Setup Checklist:**
+**Partner Agent Setup Checklist:**
 
 1. **Create Agent** from blank template
-2. **Set First Message** with dynamic variables:
+2. **Set First Message** (kept short, in‑character):
    ```
-   Hello! Welcome to your {{examLevel}} speaking exam practice. We're going to start with {{examPart}}. 
-   Are you ready to begin?
+   Ready to discuss. Let's look at the task.
    ```
-3. **Set System Prompt** (example for B2 Part 1):
+3. **Set System Prompt** (example for B2 Partner):
    ```
-   You are a Cambridge B2 First speaking examiner conducting Part 1 (Interview).
+   You are a Cambridge speaking test candidate (the partner), not the examiner.
    
    Your role:
-   - Ask the candidate personal questions about their life, interests, studies, and future plans
-   - Be professional, warm, and encouraging
-   - Allow natural pauses for the candidate to think
-   - Ask follow-up questions based on their answers
-   - Manage the timing (approximately 2 minutes total)
-   
-   Question bank for Part 1:
-   - Where are you from? / Tell me about your hometown.
-   - What do you do? Are you a student or do you work?
-   - What do you enjoy doing in your free time?
-   - Do you have any plans for the future?
-   - What kind of music/films/books do you like?
-   
-   After approximately 2 minutes, politely conclude: "Thank you. Now let's move on to the next part."
+   - Collaborate naturally with the user
+   - Offer ideas, ask for opinions, and build on the user's suggestions
+   - Keep language appropriate to {{examLevel}}
+   - Stay on task and steer toward a decision by the end
+   - Avoid giving instructions or judging performance
+   - Speak in short, exam‑realistic turns (5–20 seconds)
    
    The candidate is using platform: {{platform}}
    Exam level: {{examLevel}}
-   Current part: {{examPart}}
+   Task prompt: {{taskPrompt}}
    ```
 
-4. **Voice Selection**: Choose a clear, professional British English voice
+4. **Voice Selection**: Choose a clear, professional British English voice (distinct from the examiner TTS voice)
 5. **Enable Transcription**: Ensure full conversation transcription is enabled
 
 **Timing Client Tool (Optional):**
@@ -1617,11 +1640,175 @@ export interface SessionConfig {
 
 ---
 
-## 4.7 Backend Architecture
+## 4.7 Exam Flow Engine (Exact Implementation)
+
+This section specifies **exact orchestration behavior** for all exam levels and parts, including roles, timing, and audio/transcript handling.
+
+### 4.7.1 Core Types (TS Contracts)
+
+```ts
+export type ExamLevel = 'B2' | 'C1' | 'C2';
+export type ExamPart = 'part1' | 'part2' | 'part3' | 'part4';
+
+export type SpeakerRole = 'interlocutor' | 'user' | 'partner' | 'agent';
+export type SegmentType =
+  | 'interlocutor_prompt'
+  | 'user_response'
+  | 'user_long_turn'
+  | 'partner_reply'
+  | 'partner_long_turn'
+  | 'collaborative_task'
+  | 'discussion'
+  | 'transition';
+
+export type UiMode = 'orb' | 'photos' | 'prompt_card';
+
+export interface ExamSegment {
+  id: string;
+  part: ExamPart;
+  type: SegmentType;
+  speaker: SpeakerRole;
+  ui: UiMode;
+  text?: string;                 // TTS text for interlocutor/partner
+  targetSeconds?: number;        // hard cap if timed
+  minSeconds?: number;           // minimum before VAD may end
+  vadEnd?: boolean;              // allow VAD to end on silence
+  agentTask?: boolean;           // true only for collaborative task
+  contentRef?: string;           // photo set id / prompt id
+}
+
+export interface ExamScript {
+  level: ExamLevel;
+  segments: ExamSegment[];
+}
+```
+
+### 4.7.2 Script Builder (Exact Part Layouts)
+
+Create a deterministic `buildExamScript(level, content)` that returns a **linear list of segments**. Each segment is executed in order by the `ExamSessionController`.
+
+**Files**
+- `src/features/exam/engine/buildExamScript.ts` (pure function)
+- `src/features/exam/engine/constants.ts` (timing + limits)
+
+**B2 / C1 Part 1 (Interview)**
+1. `interlocutor_prompt` (orb)
+2. `user_response` (orb, VAD end, 8–15s target)
+3. Repeat for 6–8 questions to total ~2 minutes
+
+**B2 / C1 Part 2 (Long Turn)**
+1. `interlocutor_prompt` (photos set A)
+2. `user_long_turn` (photos set A, 60s cap)
+3. `partner_reply` (photos set A, 30s)
+4. `interlocutor_prompt` (photos set B, to partner)
+5. `partner_long_turn` (photos set B, 60s)
+6. `interlocutor_prompt` ("What do you think?")
+7. `user_response` (30s cap)
+
+**B2 / C1 Part 3 (Collaborative Task)**
+1. `interlocutor_prompt` (prompt card)
+2. `collaborative_task` (agent live, 2 min)
+3. `interlocutor_prompt` (decision prompt)
+4. `collaborative_task` (agent live, 1 min)
+
+**B2 / C1 Part 4 (Discussion)**
+1. `interlocutor_prompt` (orb)
+2. `user_response` (VAD end)
+3. `partner_reply` (orb, 10–20s)
+4. Repeat for 4–5 minutes
+
+**C2 Part 1 (Interview)**
+Same as B2/C1 Part 1 but **total time 2 minutes**.
+
+**C2 Part 2 (Collaborative Task: Reaction + Decision)**
+1. `interlocutor_prompt` (photos, reaction question)
+2. `user_response` (20–30s)
+3. `partner_reply` (20–30s)
+4. `interlocutor_prompt` (decision task)
+5. `collaborative_task` (agent live, 3 min; decision by end)
+
+**C2 Part 3 (Long Turn + Discussion)**
+1. `interlocutor_prompt` (prompt card to user)
+2. `user_long_turn` (120s)
+3. `partner_reply` (30s)
+4. `interlocutor_prompt` (follow‑up to user)
+5. `user_response` (10–20s)
+6. `interlocutor_prompt` (prompt card to partner)
+7. `partner_long_turn` (120s)
+8. `interlocutor_prompt` ("What do you think?")
+9. `user_response` (30s)
+10. `discussion` (6 min) alternating:
+    - `interlocutor_prompt` → `user_response` → `partner_reply`
+
+### 4.7.3 ExamSessionController (Runtime Orchestration)
+
+Implement `src/features/exam/engine/ExamSessionController.ts`:
+
+```ts
+class ExamSessionController {
+  constructor(script: ExamScript, services: ServiceDeps) {}
+  async start(): Promise<void>;
+  async next(): Promise<void>;
+  async runSegment(segment: ExamSegment): Promise<void>;
+}
+```
+
+**Supporting modules**
+- `src/features/exam/engine/SegmentRunner.ts` (executes a single segment)
+- `src/features/exam/engine/TranscriptStore.ts` (in‑memory transcript cache)
+
+**Rules**
+- `interlocutor_prompt`: TTS → wait for playback end.
+- `user_response` / `user_long_turn`: record audio → stop on timer or VAD → STT.
+- `partner_reply` / `partner_long_turn`: generate text via LLM → TTS.
+- `collaborative_task`: start conversational agent; stop at `targetSeconds`.
+- Save a transcript entry for **every segment** with speaker, part, timestamps.
+
+### 4.7.4 Partner Reply Generator (LLM → TTS)
+
+Create `src/features/voice/services/partnerReply.ts`:
+
+```ts
+generatePartnerReply({
+  level,
+  mode: 'comment' | 'long_turn' | 'discussion',
+  prompt,
+  targetSeconds
+}): Promise<string>
+```
+
+**Prompt constraints**
+- No examiner language ("You should…", "Let’s move on")
+- Build on user’s ideas
+- Keep to length target (approx words = targetSeconds * 2.3)
+- Use level‑appropriate grammar/vocab
+
+### 4.7.5 Transcript & Audio Pipeline
+
+For every segment:
+1. `recordAudio()` → local file
+2. `transcribe()` via ElevenLabs STT
+3. Save `exam_segments` row:
+   - `session_id`, `part`, `segment_type`, `speaker`, `duration_ms`
+   - `audio_url`, `transcript_text`, `started_at`, `ended_at`
+4. Append to in‑memory session transcript for scoring
+
+### 4.7.6 Scoring Pipeline (Exact)
+
+Implement `scoreSession(transcript, level)`:
+1. Split by part
+2. For each part, LLM scores **analytical criteria** with structured JSON
+3. Aggregate to part scores + overall score
+4. Store `exam_scores` with:
+   - `grammar`, `lexis`, `discourse`, `pronunciation`, `interactive`, `global`
+
+---
+
+## 4.8 Backend Architecture
 
 ⚠️ **Security Note:** API keys (ElevenLabs, OpenAI) must NEVER be exposed on the client. All API calls go through Supabase Edge Functions.
 
-### 4.7.1 Architecture Overview
+### 4.8.1 Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -1675,7 +1862,7 @@ export interface SessionConfig {
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.7.2 Supabase Edge Functions
+### 4.8.2 Supabase Edge Functions
 
 **Folder Structure:**
 ```
@@ -1700,7 +1887,7 @@ supabase/
 └── .env                       # Secret API keys (NOT in repo)
 ```
 
-### 4.7.3 Text-to-Speech Edge Function
+### 4.8.3 Text-to-Speech Edge Function
 
 ```typescript
 // supabase/functions/voice-tts/index.ts
@@ -1766,7 +1953,7 @@ serve(async (req) => {
 });
 ```
 
-### 4.7.4 Speech-to-Text Edge Function
+### 4.8.4 Speech-to-Text Edge Function
 
 ```typescript
 // supabase/functions/voice-stt/index.ts
@@ -1830,7 +2017,7 @@ serve(async (req) => {
 });
 ```
 
-### 4.7.5 Conversational AI Session Edge Function
+### 4.8.5 Conversational AI Session Edge Function
 
 For Part 3, clients need a signed URL to connect directly to ElevenLabs:
 
@@ -1842,11 +2029,11 @@ import { corsHeaders } from '../_shared/cors.ts';
 
 const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
 
-// Part 3 agents only
+// Collaborative task agents only
 const AGENT_IDS = {
-  B2: Deno.env.get('ELEVENLABS_AGENT_B2_PART3'),
-  C1: Deno.env.get('ELEVENLABS_AGENT_C1_PART3'),
-  C2: Deno.env.get('ELEVENLABS_AGENT_C2_PART3'),
+  B2: Deno.env.get('ELEVENLABS_AGENT_B2_COLLAB'),
+  C1: Deno.env.get('ELEVENLABS_AGENT_C1_COLLAB'),
+  C2: Deno.env.get('ELEVENLABS_AGENT_C2_COLLAB'),
 };
 
 serve(async (req) => {
@@ -1933,7 +2120,7 @@ serve(async (req) => {
 });
 ```
 
-### 4.7.6 Conversational AI Webhook Handler
+### 4.8.6 Conversational AI Webhook Handler
 
 ElevenLabs can send webhook events when conversations end, including full transcripts:
 
@@ -1992,7 +2179,7 @@ serve(async (req) => {
 });
 ```
 
-### 4.7.7 Exam Content Fetch Function
+### 4.8.7 Exam Content Fetch Function
 
 ```typescript
 // supabase/functions/exam-content/index.ts
@@ -2089,7 +2276,7 @@ function shuffleAndTake<T>(arr: T[] | null, count: number): T[] {
 }
 ```
 
-### 4.7.8 Database Schema Updates (Exam Content)
+### 4.8.8 Database Schema Updates (Exam Content)
 
 Add these tables to the existing schema in Section 6:
 
@@ -2215,7 +2402,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 (You would then paste the Deno code from my previous response into the actual Supabase function editor.)
 
-### 4.7.9 Client Service Updates
+### 4.8.9 Client Service Updates
 
 Update the client to call Edge Functions instead of direct API calls:
 
@@ -3321,7 +3508,7 @@ function canStartSession(todayMinutes: number, estimate: number) {
 │ └─────────────────────────────────────────────────┘ │
 │                                                     │
 │ ⚠️ Focus Areas:                                     │
-│ • Part 3 (Collaborative) - Score: 3.2              │
+│ • Collaborative Task - Score: 3.2                 │
 │ • Pronunciation - Needs improvement                │
 └─────────────────────────────────────────────────────┘
 ```
@@ -3521,13 +3708,11 @@ function useEntitlements() {
 
 ### Phase 2: Core Exam Experience (ElevenLabs Integration)
 - [ ] **ElevenLabs Agent Setup (ElevenLabs Dashboard)**:
-  - [ ] Create B2 Part 1 agent (Interview) with Cambridge examiner persona
-  - [ ] Create B2 Part 3 agent (Collaborative Task)
-  - [ ] Create B2 Part 4 agent (Discussion)
-  - [ ] Create C1 Part 1, 3, 4 agents
-  - [ ] Create C2 Part 1, 2, 3 agents
-  - [ ] Configure dynamic variables for each agent (platform, examLevel, examPart)
-  - [ ] Select appropriate British English voice for each agent
+  - [ ] Create B2 Partner agent (Collaborative Task)
+  - [ ] Create C1 Partner agent (Collaborative Task)
+  - [ ] Create C2 Partner agent (Collaborative Task)
+  - [ ] Configure dynamic variables for each agent (platform, examLevel, taskPrompt)
+  - [ ] Select appropriate British English voice for partner agents
   - [ ] Enable conversation transcription on all agents
 - [ ] **React Native Implementation**:
   - [ ] Implement `useConversationalAI` hook (Section 4.4.5)
@@ -3535,9 +3720,11 @@ function useEntitlements() {
   - [ ] Implement `BreathingOrb` animation component (Section 4.4.7)
   - [ ] Implement conversation error handling and retry logic (Section 4.4.10)
 - [ ] **Part-Specific Screens**:
-  - [ ] Part 1 (Interview) - conversational flow with orb UI
-  - [ ] Part 2 (Long Turn) - photo display + local recording + ElevenLabs STT + grading
-  - [ ] Parts 3 & 4 - conversational flows with orb UI
+  - [ ] Part 1 (Interview) - scripted examiner TTS + orb UI + STT
+  - [ ] B2/C1 Part 2 (Long Turn) - photo display + timed recording + partner TTS response
+  - [ ] Collaborative Task (B2/C1 Part 3, C2 Part 2) - live partner agent + orb UI
+  - [ ] B2/C1 Part 4 Discussion - examiner TTS + partner TTS replies
+  - [ ] C2 Part 3 - timed long turns + discussion (examiner TTS + partner TTS)
 - [ ] **Scoring & Results**:
   - [ ] Implement transcript capture from conversation sessions
   - [ ] Basic scoring with GPT-4o-mini structured outputs
@@ -3993,7 +4180,7 @@ interface ExamPartTiming {
 
 | Service | Pricing | Notes |
 |---------|---------|-------|
-| **Conversational AI** | ~$0.088-0.12/min | Part 3 only |
+| **Conversational AI** | ~$0.088-0.12/min | Collaborative task only |
 | **TTS API** | ~$0.30/1K chars | ~$0.02/min of speech |
 | **STT API** | ~$0.05/min | Transcription |
 

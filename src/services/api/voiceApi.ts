@@ -54,7 +54,16 @@ export async function speechToText(audioUri: string): Promise<{ text: string; wo
   return response.json();
 }
 
-export async function getAgentSession(level: string, part3ContentId: string): Promise<{ signedUrl: string; agentId: string; contentPrompt?: string; contentOptions?: string[] }> {
+interface AgentSession {
+  signedUrl: string;
+  agentId: string;
+  contentPrompt?: string;
+  contentOptions?: string[];
+  diagramMermaid?: string;
+  decisionPrompt?: string;
+}
+
+export async function getAgentSession(level: string, part3ContentId: string): Promise<AgentSession> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${FUNCTIONS_URL}/voice-agent-session`, {
