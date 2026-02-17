@@ -41,9 +41,16 @@ export function createSupabaseAdmin(): SupabaseClient {
 }
 
 /**
- * Get the authenticated user's ID from the auth header
+ * Get the authenticated user's ID from the auth header.
+ * Accepts an optional raw Authorization header to extract the JWT
+ * and pass it explicitly to getUser(), which is more reliable than
+ * relying on global headers being picked up by GoTrueClient.
  */
-export async function getUserId(supabase: SupabaseClient): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+export async function getUserId(
+  supabase: SupabaseClient,
+  authHeader?: string | null,
+): Promise<string | null> {
+  const token = authHeader?.replace('Bearer ', '') || undefined;
+  const { data: { user } } = await supabase.auth.getUser(token);
   return user?.id ?? null;
 }

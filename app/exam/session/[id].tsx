@@ -11,21 +11,16 @@ import { useScriptedExam } from "@/features/voice/hooks/useScriptedExam";
 import type { ConversationTurn, ExamLevel, ExamPart } from "@/types/exam";
 import { getRandomQuestions } from "@/services/api/examContentApi";
 import { gradeExam } from "@/services/api/voiceApi";
-
-const FREE_TRIAL_KEY = "mintzo_free_trial_used";
+import { FREE_TRIAL_KEY } from "@/constants/examConfig";
 
 function normalizeLevel(value?: string): ExamLevel {
   const upper = value?.toUpperCase();
-  if (upper === "B2" || upper === "C1" || upper === "C2") {
-    return upper;
-  }
+  if (upper === "B2" || upper === "C1" || upper === "C2") return upper;
   return "B2";
 }
 
 function normalizePart(value?: string): ExamPart {
-  if (value === "part1" || value === "part2" || value === "part3" || value === "part4") {
-    return value;
-  }
+  if (value === "part1" || value === "part2" || value === "part3" || value === "part4") return value;
   return "part1";
 }
 
@@ -53,28 +48,23 @@ export default function ExamSessionScreen() {
 
   const handleExamComplete = useCallback(
     async (fullTranscript: ConversationTurn[]) => {
-      // Convert transcript array to string
       const transcriptText = fullTranscript
         .map((turn) => `${turn.role}: ${turn.text}`)
         .join("\n");
 
-      // Store transcript for this part
       transcriptsRef.current[examPart] = transcriptText;
 
       if (isFreeTrial) {
-        // Free trial: mark as used, skip grading, redirect to register
         await AsyncStorage.setItem(FREE_TRIAL_KEY, "true");
         router.replace("/(auth)/register" as any);
         return;
       }
 
-      // Grade the exam
       setIsGrading(true);
       try {
         await gradeExam(id, transcriptsRef.current, examLevel);
       } catch (error) {
         console.error("Grading failed:", error);
-        // Still navigate to results even if grading fails
       } finally {
         setIsGrading(false);
         router.replace(`/exam/session/results/${id}`);
@@ -88,50 +78,51 @@ export default function ExamSessionScreen() {
     part: examPart,
     questions,
     onComplete: handleExamComplete,
-    onError: (error) => {
-      setLoadError(error.message);
-    },
+    onError: (error) => setLoadError(error.message),
   });
 
+  // Load questions
   useEffect(() => {
-    let isMounted = true;
+    if (!isScripted) return;
 
-    async function loadQuestions() {
-      if (!isScripted) return;
+    let cancelled = false;
 
+    (async () => {
       setIsLoading(true);
       setLoadError(null);
 
       try {
         const data = await getRandomQuestions(examLevel, examPart, examPart === "part1" ? 6 : 5);
-        if (!isMounted) return;
-        const mapped = (data ?? []).map((item: any) => ({
-          id: item.id,
-          questionText: item.question_text,
-          audioUrl: item.audio_url ?? null,
-        }));
-        setQuestions(mapped);
+        if (cancelled) return;
+        setQuestions(
+          (data ?? []).map((item: any) => ({
+            id: item.id,
+            questionText: item.question_text,
+            audioUrl: item.audio_url ?? null,
+          })),
+        );
       } catch (error) {
-        if (!isMounted) return;
-        setLoadError((error as Error).message);
+        if (!cancelled) setLoadError((error as Error).message);
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
-    }
+    })();
 
-    loadQuestions();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { cancelled = true; };
   }, [examLevel, examPart, isScripted]);
 
+  // Start exam once questions are loaded (run only once)
+  const examStartedRef = useRef(false);
+
   useEffect(() => {
-    if (!isScripted) return;
-    if (isLoading || questions.length === 0) return;
+    if (!isScripted || isLoading || questions.length === 0) return;
+    if (examStartedRef.current) return;
+
+    examStartedRef.current = true;
     startExam();
 
     return () => {
+      examStartedRef.current = false;
       stopExam();
     };
   }, [isLoading, isScripted, questions.length, startExam, stopExam]);

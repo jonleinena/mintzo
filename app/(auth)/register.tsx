@@ -35,16 +35,38 @@ export default function RegisterScreen() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
+
+    // Check if current user is anonymous - if so, link identity instead of creating new account
+    const { data: { session } } = await supabase.auth.getSession();
+    const isAnonymous = session?.user?.is_anonymous;
+
+    let error: Error | null = null;
+
+    if (isAnonymous) {
+      // Link email to anonymous account (preserves exam session data)
+      const { error: updateError } = await supabase.auth.updateUser({
+        email: email.trim(),
+        password,
         data: {
           display_name: name.trim() || undefined,
           auth_type: "email",
         },
-      },
-    });
+      });
+      error = updateError;
+    } else {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: {
+            display_name: name.trim() || undefined,
+            auth_type: "email",
+          },
+        },
+      });
+      error = signUpError;
+    }
+
     setLoading(false);
     if (error) {
       Alert.alert("Registration failed", error.message);

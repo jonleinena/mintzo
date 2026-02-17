@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Audio } from 'expo-av';
 import type { ExamLevel, ConversationTurn } from '@/types/exam';
 import { textToSpeech, playAudio } from '@/features/voice/services/elevenlabsTTS';
 import { speechToText } from '@/features/voice/services/elevenlabsSTT';
@@ -94,6 +95,12 @@ export function useLongTurn({ level, onComplete, onError }: UseLongTurnProps) {
     setState('follow_up_speaking');
 
     try {
+      // Switch back to playback mode before TTS
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+
       // TTS reads the follow-up question
       const audioPath = await textToSpeech({ text: content.followUpQuestion });
       appendTranscript({
@@ -170,6 +177,12 @@ export function useLongTurn({ level, onComplete, onError }: UseLongTurnProps) {
         comparisonPoints: rawContent.comparison_points ?? [],
       };
       setContent(part2Content);
+
+      // Switch to playback mode for TTS
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
 
       // TTS reads the prompt
       setState('prep');

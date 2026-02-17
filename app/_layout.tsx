@@ -21,8 +21,7 @@ import {
 } from "@/stores/subscriptionStore";
 import type { Session } from "@supabase/supabase-js";
 import type { User } from "@/types/user";
-
-const FREE_TRIAL_KEY = "mintzo_free_trial_used";
+import { FREE_TRIAL_KEY } from "@/constants/examConfig";
 
 export { ErrorBoundary } from "expo-router";
 

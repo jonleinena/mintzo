@@ -45,3 +45,5 @@ export const CAMBRIDGE_SCALE = {
 } as const;
 
 export const DAILY_LIMIT_MINUTES = 45;
+
+export const FREE_TRIAL_KEY = 'mintzo_free_trial_used';

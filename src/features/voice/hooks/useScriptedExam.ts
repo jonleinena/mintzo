@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { Audio } from 'expo-av';
 import type { ExamLevel, ExamPart, ConversationTurn } from '@/types/exam';
 import { playAudio, textToSpeech, uploadToCache } from '@/features/voice/services/elevenlabsTTS';
 import { speechToText } from '@/features/voice/services/elevenlabsSTT';
@@ -30,38 +31,73 @@ export function useScriptedExam({
   const [state, setState] = useState<ScriptedExamState>('idle');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [transcript, setTranscript] = useState<ConversationTurn[]>([]);
-  const [sessionToken, setSessionToken] = useState(0);
+
   const transcriptRef = useRef<ConversationTurn[]>([]);
   const vadRef = useRef<VoiceActivityDetector | null>(null);
   const isRunningRef = useRef(false);
 
+  // Stable refs for callback props - avoids re-creating the loop on every render
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+
   const appendTranscript = useCallback((turn: ConversationTurn) => {
     transcriptRef.current = [...transcriptRef.current, turn];
-    setTranscript(transcriptRef.current);
+    setTranscript([...transcriptRef.current]);
   }, []);
 
-  const finishExam = useCallback(() => {
-    setState('complete');
-    onComplete(transcriptRef.current);
-  }, [onComplete]);
+  // Wait for the candidate to finish speaking via VAD + STT.
+  // Returns transcribed text, or null if no speech was detected.
+  const listenForAnswer = useCallback((): Promise<string | null> => {
+    return new Promise((resolve, reject) => {
+      vadRef.current = new VoiceActivityDetector({
+        onSpeechEnd: async (audioUri) => {
+          try {
+            const result = await speechToText(audioUri);
+            resolve(result.text);
+          } catch (err) {
+            reject(err);
+          }
+        },
+        onNoSpeech: () => {
+          resolve(null);
+        },
+      });
 
-  const askQuestion = useCallback(
-    async (question: ScriptedQuestion) => {
-      setState('examiner_speaking');
+      vadRef.current.start().catch(reject);
+    });
+  }, []);
 
-      try {
+  const runExamLoop = useCallback(
+    async (qs: ScriptedQuestion[]) => {
+      for (let i = 0; i < qs.length; i++) {
+        if (!isRunningRef.current) return;
+
+        const question = qs[i];
+        setCurrentIndex(i);
+
+        // --- Examiner speaks ---
+        setState('examiner_speaking');
+
+        // Switch to playback mode (VAD sets recording mode)
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+        });
+
         if (question.audioUrl) {
           await playAudio(question.audioUrl);
         } else {
           const audioPath = await textToSpeech({ text: question.questionText });
           await playAudio(audioPath);
 
-          uploadToCache(question.id, level, part, audioPath).then((url) => {
-            if (url) {
-              console.log('Cached audio URL:', url);
-            }
-          });
+          if (!question.id.startsWith('intro-')) {
+            uploadToCache(question.id, level, part, audioPath).catch(() => {});
+          }
         }
+
+        if (!isRunningRef.current) return;
 
         appendTranscript({
           role: 'examiner',
@@ -69,45 +105,32 @@ export function useScriptedExam({
           timestamp: new Date(),
         });
 
+        // --- Candidate speaks ---
         setState('candidate_speaking');
 
-        vadRef.current = new VoiceActivityDetector({
-          onSpeechEnd: async (audioUri) => {
-            try {
-              const result = await speechToText(audioUri);
-              appendTranscript({
-                role: 'candidate',
-                text: result.text,
-                timestamp: new Date(),
-              });
+        const answerText = await listenForAnswer();
 
-              setCurrentIndex((prev) => prev + 1);
-            } catch (error) {
-              setState('error');
-              onError?.(error as Error);
-            }
-          },
-        });
+        if (!isRunningRef.current) return;
 
-        await vadRef.current.start();
-      } catch (error) {
-        setState('error');
-        onError?.(error as Error);
+        if (answerText) {
+          appendTranscript({
+            role: 'candidate',
+            text: answerText,
+            timestamp: new Date(),
+          });
+        }
+
+        vadRef.current = null;
+      }
+
+      if (isRunningRef.current) {
+        isRunningRef.current = false;
+        setState('complete');
+        onCompleteRef.current(transcriptRef.current);
       }
     },
-    [appendTranscript, level, onError, part]
+    [appendTranscript, level, listenForAnswer, part]
   );
-
-  useEffect(() => {
-    if (!isRunningRef.current) return;
-
-    if (currentIndex >= questions.length) {
-      finishExam();
-      return;
-    }
-
-    askQuestion(questions[currentIndex]);
-  }, [askQuestion, currentIndex, finishExam, questions, sessionToken]);
 
   const startExam = useCallback(() => {
     if (isRunningRef.current) return;
@@ -116,12 +139,22 @@ export function useScriptedExam({
     setCurrentIndex(0);
     setTranscript([]);
     transcriptRef.current = [];
-    setSessionToken((prev) => prev + 1);
-  }, []);
+
+    runExamLoop(questions).catch((error) => {
+      if (isRunningRef.current) {
+        isRunningRef.current = false;
+        setState('error');
+        onErrorRef.current?.(error as Error);
+      }
+    });
+  }, [questions, runExamLoop]);
 
   const stopExam = useCallback(async () => {
     isRunningRef.current = false;
-    await vadRef.current?.cancel();
+    if (vadRef.current) {
+      await vadRef.current.cancel();
+      vadRef.current = null;
+    }
     setState('idle');
   }, []);
 

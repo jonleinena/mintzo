@@ -5,21 +5,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { ExamPart } from "@/types/exam";
 import { useSubscriptionGate } from "@/hooks/useSubscriptionGate";
 import { supabase } from "@/services/supabase/client";
+import { signInAnonymously } from "@/features/auth/services/authService";
 import { useAuthStore } from "@/stores/authStore";
 import { useState } from "react";
+import { FREE_TRIAL_KEY } from "@/constants/examConfig";
 
-const FREE_TRIAL_KEY = "mintzo_free_trial_used";
-
-function generateLocalId(): string {
-  // Simple random ID for local-only sessions (not stored in DB)
-  const chars = "abcdef0123456789";
-  const segments = [8, 4, 4, 4, 12];
-  return segments
-    .map((len) =>
-      Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
-    )
-    .join("-");
-}
 
 const PART_INFO: Record<
   ExamPart,
@@ -87,41 +77,45 @@ export default function ExamPartScreen() {
   const isPart1 = part === "part1";
   const [isStarting, setIsStarting] = useState(false);
 
+  // Anonymous users are not considered "real" users for gating
+  const isRealUser = user != null && user.authType !== "anonymous";
+
   const handleStart = async () => {
     if (isStarting) return;
 
     const examLevel = level ? String(level).toUpperCase() : "B2";
     const examPart = part ?? "part1";
 
-    if (isPart1) {
-      // Part 1 gating: free for one unauthed run, then auth + paywall
+    if (!isPart1) {
+      // Parts 2/3/4: always require real auth + premium
+      if (!isRealUser) {
+        router.push("/(auth)/register" as any);
+        return;
+      }
+      const allowed = requirePremium("/exam");
+      if (!allowed) return;
+    } else {
+      // Part 1: one free anonymous trial, then real auth + premium
       const freeTrialUsedLocally = await AsyncStorage.getItem(FREE_TRIAL_KEY);
-      const freeTrialUsed = user?.hasUsedFreeTrial || freeTrialUsedLocally === "true";
+      const freeTrialUsed =
+        user?.hasUsedFreeTrial || freeTrialUsedLocally === "true";
 
-      if (freeTrialUsed) {
-        // Free trial consumed - require auth + premium
-        if (!user) {
+      if (freeTrialUsed || isRealUser) {
+        // Free trial consumed OR already a real user - require auth + premium
+        if (!isRealUser) {
           router.push("/(auth)/register" as any);
           return;
         }
         const allowed = requirePremium("/exam");
         if (!allowed) return;
       }
-    } else {
-      // Parts 2/3/4 always require auth + premium
-      if (!user) {
-        router.push("/(auth)/register" as any);
-        return;
-      }
-      const allowed = requirePremium("/exam");
-      if (!allowed) return;
     }
 
     setIsStarting(true);
 
     try {
-      if (user) {
-        // Authenticated: create DB session for grading
+      if (isRealUser) {
+        // Real authenticated user: create DB session for grading
         const { data: session, error } = await supabase
           .from("exam_sessions")
           .insert({
@@ -129,7 +123,7 @@ export default function ExamPartScreen() {
             level: examLevel,
             session_type: "single_part",
             parts_practiced: [examPart],
-            is_free_trial: isPart1 && !user.hasUsedFreeTrial,
+            is_free_trial: false,
           })
           .select("id")
           .single();
@@ -145,10 +139,34 @@ export default function ExamPartScreen() {
           params: { level: examLevel, part: examPart },
         });
       } else {
-        // Unauthenticated free trial: local-only session
-        const localId = generateLocalId();
+        // Anonymous free trial (Part 1 only, one-time)
+        const { user: anonUser } = await signInAnonymously();
+        if (!anonUser) {
+          console.error("Failed to create anonymous session");
+          setIsStarting(false);
+          return;
+        }
+
+        const { data: session, error } = await supabase
+          .from("exam_sessions")
+          .insert({
+            user_id: anonUser.id,
+            level: examLevel,
+            session_type: "single_part",
+            parts_practiced: [examPart],
+            is_free_trial: true,
+          })
+          .select("id")
+          .single();
+
+        if (error || !session) {
+          console.error("Failed to create exam session:", error);
+          setIsStarting(false);
+          return;
+        }
+
         router.push({
-          pathname: `/exam/session/${localId}` as any,
+          pathname: `/exam/session/${session.id}` as any,
           params: { level: examLevel, part: examPart, freeTrial: "true" },
         });
       }

@@ -41,7 +41,7 @@ Deno.serve(async (req: Request) => {
     const supabase = createSupabaseClient(authHeader);
 
     // Verify user owns this session
-    const userId = await getUserId(supabase);
+    const userId = await getUserId(supabase, authHeader);
     if (!userId) {
       return errorResponse('Unauthorized', 401);
     }

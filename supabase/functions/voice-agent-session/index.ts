@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
     // Authenticate user
     const authHeader = req.headers.get('Authorization');
     const supabase = createSupabaseClient(authHeader);
-    const userId = await getUserId(supabase);
+    const userId = await getUserId(supabase, authHeader);
 
     if (!userId) {
       return errorResponse('Unauthorized', 401);

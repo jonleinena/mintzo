@@ -20,6 +20,12 @@ export async function signUpWithEmail(email: string, password: string, displayNa
   return data;
 }
 
+export async function signInAnonymously() {
+  const { data, error } = await supabase.auth.signInAnonymously();
+  if (error) throw error;
+  return data;
+}
+
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;

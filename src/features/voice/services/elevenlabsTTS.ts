@@ -2,12 +2,7 @@ import { Audio } from 'expo-av';
 import { File, Paths } from 'expo-file-system';
 import { supabase } from '@/services/supabase/client';
 import type { ExamLevel, ExamPart } from '@/types/exam';
-
-const ELEVENLABS_API_KEY = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY ?? '';
-// "Rachel" - a clear, natural English voice suitable for exam questions
-const FALLBACK_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
-const DEFAULT_VOICE_ID = process.env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID || FALLBACK_VOICE_ID;
-const API_BASE = 'https://api.elevenlabs.io/v1';
+import { ensureElevenLabsKey, ELEVENLABS_API_KEY, API_BASE } from './elevenLabsConfig';
 
 interface VoiceSettings {
   stability?: number;
@@ -23,12 +18,17 @@ interface TextToSpeechOptions {
   voiceSettings?: VoiceSettings;
 }
 
+const FALLBACK_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+const DEFAULT_VOICE_ID = process.env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID || FALLBACK_VOICE_ID;
+
 const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
   stability: 0.4,
   similarity_boost: 0.75,
   style: 0.3,
   use_speaker_boost: true,
 };
+
+const PLAYBACK_TIMEOUT_MS = 30000;
 
 function arrayBufferToBase64(input: ArrayBuffer): string {
   const bytes = new Uint8Array(input);
@@ -40,24 +40,7 @@ function arrayBufferToBase64(input: ArrayBuffer): string {
     binary += String.fromCharCode(...chunk);
   }
 
-  if (typeof btoa === 'function') {
-    return btoa(binary);
-  }
-
-  const nodeBuffer = (globalThis as any).Buffer as
-    | { from: (input: string, encoding?: string) => { toString: (encoding: string) => string } }
-    | undefined;
-  if (nodeBuffer) {
-    return nodeBuffer.from(binary, 'binary').toString('base64');
-  }
-
-  throw new Error('Base64 encoding is not available in this environment.');
-}
-
-function ensureConfig() {
-  if (!ELEVENLABS_API_KEY) {
-    throw new Error('Missing EXPO_PUBLIC_ELEVENLABS_API_KEY');
-  }
+  return btoa(binary);
 }
 
 export async function textToSpeech({
@@ -66,7 +49,7 @@ export async function textToSpeech({
   modelId = 'eleven_multilingual_v2',
   voiceSettings = DEFAULT_VOICE_SETTINGS,
 }: TextToSpeechOptions): Promise<string> {
-  ensureConfig();
+  ensureElevenLabsKey();
 
   const response = await fetch(`${API_BASE}/text-to-speech/${voiceId}`, {
     method: 'POST',
@@ -99,9 +82,23 @@ export async function playAudio(uri: string): Promise<void> {
 
   try {
     await sound.playAsync();
-    await new Promise<void>((resolve) => {
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        sound.setOnPlaybackStatusUpdate(null);
+        reject(new Error('Audio playback timed out'));
+      }, PLAYBACK_TIMEOUT_MS);
+
       sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
+        if (!status.isLoaded) {
+          clearTimeout(timeout);
+          sound.setOnPlaybackStatusUpdate(null);
+          reject(new Error('Audio failed to load during playback'));
+          return;
+        }
+        if (status.didJustFinish) {
+          clearTimeout(timeout);
+          sound.setOnPlaybackStatusUpdate(null);
           resolve();
         }
       });
@@ -118,6 +115,13 @@ export async function uploadToCache(
   localAudioPath: string
 ): Promise<string | null> {
   try {
+    // Ensure we have a valid session before calling the edge function
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      console.warn('Cache upload skipped: no active session');
+      return null;
+    }
+
     const file = new File(localAudioPath);
     const base64Audio = await file.base64();
 
