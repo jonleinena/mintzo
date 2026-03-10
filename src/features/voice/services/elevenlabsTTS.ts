@@ -115,7 +115,6 @@ export async function uploadToCache(
   localAudioPath: string
 ): Promise<string | null> {
   try {
-    // Ensure we have a valid session before calling the edge function
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
       console.warn('Cache upload skipped: no active session');
@@ -126,12 +125,8 @@ export async function uploadToCache(
     const base64Audio = await file.base64();
 
     const { data, error } = await supabase.functions.invoke('cache-audio', {
-      body: {
-        questionId,
-        level,
-        part,
-        audioBase64: base64Audio,
-      },
+      body: { questionId, level, part, audioBase64: base64Audio },
+      headers: { Authorization: `Bearer ${session.access_token}` },
     });
 
     if (error) {

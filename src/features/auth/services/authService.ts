@@ -110,7 +110,7 @@ export function mapProfileToUser(profile: Record<string, any>, authUser: AuthUse
     hasUsedFreeTrial: profile.has_used_free_trial ?? false,
     targetExamLevel: profile.target_exam_level ?? 'B2',
     targetExamDate: profile.target_exam_date ? new Date(profile.target_exam_date) : new Date(),
-    dailyPracticeGoal: profile.daily_practice_goal ?? 15,
+    dailyPracticeGoal: profile.daily_practice_goal ?? 45,
     createdAt: new Date(profile.created_at ?? authUser.created_at),
     updatedAt: new Date(profile.updated_at ?? authUser.updated_at),
   };
