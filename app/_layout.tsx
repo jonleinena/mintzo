@@ -12,6 +12,7 @@ import {
   loginUser,
   logoutUser,
 } from "@/services/revenuecat/purchaseService";
+import { mapProfileToUser } from "@/features/auth/services/authService";
 import { useAuthStore } from "@/stores/authStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import {
@@ -20,7 +21,6 @@ import {
   removeSubscriptionListener,
 } from "@/stores/subscriptionStore";
 import type { Session } from "@supabase/supabase-js";
-import type { User } from "@/types/user";
 import { FREE_TRIAL_KEY } from "@/constants/examConfig";
 
 export { ErrorBoundary } from "expo-router";
@@ -28,38 +28,6 @@ export { ErrorBoundary } from "expo-router";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapProfileToUser(profile: any, email: string | undefined): User {
-  return {
-    id: profile.id,
-    email,
-    displayName: profile.display_name,
-    avatarUrl: profile.avatar_url,
-    authType: profile.auth_type || "email",
-    academyId: profile.academy_id,
-    academyGroupId: profile.academy_group_id,
-    onboardingComplete: profile.onboarding_complete,
-    hasUsedFreeTrial: profile.has_used_free_trial,
-    targetExamLevel: profile.target_exam_level || "B2",
-    targetExamDate: profile.target_exam_date
-      ? new Date(profile.target_exam_date)
-      : new Date(),
-    dailyPracticeGoal: profile.daily_practice_goal || 45,
-    createdAt: new Date(profile.created_at),
-    updatedAt: new Date(profile.updated_at),
-  };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractSettingsFromProfile(profile: any) {
-  return {
-    targetExamLevel: profile.target_exam_level || "B2",
-    targetExamDate: profile.target_exam_date ?? null,
-    dailyPracticeGoal: profile.daily_practice_goal || 45,
-    onboardingComplete: profile.onboarding_complete ?? false,
-  };
-}
 
 function useHasHydrated(): boolean {
   return useSyncExternalStore(
@@ -106,6 +74,65 @@ export default function RootLayout() {
   const { checkSubscription, reset: resetSubscription } =
     useSubscriptionStore();
 
+  // Shared logic for hydrating user + settings from a Supabase session.
+  // Anonymous users only get setUser (for exam_sessions RLS) - we skip the
+  // profile fetch and settings sync so onboarding_complete=false on the
+  // server doesn't redirect them away from the exam flow.
+  const syncSessionUser = async (session: Session) => {
+    const { user: authUser } = session;
+    const isAnonymous = authUser.is_anonymous === true;
+
+    loginUser(authUser.id).then(() => {
+      if (!isAnonymous) checkSubscription();
+    });
+
+    if (isAnonymous) {
+      // Still set a minimal user so RLS-gated inserts (exam_sessions) work
+      setUser({
+        id: authUser.id,
+        email: undefined,
+        authType: "anonymous",
+        onboardingComplete: false,
+        hasUsedFreeTrial: false,
+        targetExamLevel: "B2",
+        targetExamDate: new Date(),
+        dailyPracticeGoal: 45,
+        createdAt: new Date(authUser.created_at),
+        updatedAt: new Date(authUser.updated_at ?? authUser.created_at),
+      });
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", authUser.id)
+      .single();
+
+    if (!profile) return;
+
+    // Sync local free trial flag to profile if needed
+    if (!profile.has_used_free_trial) {
+      const localFlag = await AsyncStorage.getItem(FREE_TRIAL_KEY);
+      if (localFlag === "true") {
+        profile.has_used_free_trial = true;
+        supabase
+          .from("profiles")
+          .update({ has_used_free_trial: true })
+          .eq("id", authUser.id)
+          .then(() => AsyncStorage.removeItem(FREE_TRIAL_KEY));
+      }
+    }
+
+    setUser(mapProfileToUser(profile, authUser));
+    setSettingsFromProfile({
+      targetExamLevel: profile.target_exam_level ?? "B2",
+      targetExamDate: profile.target_exam_date ?? null,
+      dailyPracticeGoal: profile.daily_practice_goal ?? 45,
+      onboardingComplete: profile.onboarding_complete ?? false,
+    });
+  };
+
   useEffect(() => {
     initializePurchases().then((initialized) => {
       if (initialized) setupSubscriptionListener();
@@ -113,34 +140,7 @@ export default function RootLayout() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session?.user) {
-        loginUser(session.user.id).then(() => checkSubscription());
-
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single()
-          .then(async ({ data: profile }) => {
-            if (!profile) return;
-
-            // Sync local free trial flag to profile if needed
-            if (!profile.has_used_free_trial) {
-              const localFlag = await AsyncStorage.getItem(FREE_TRIAL_KEY);
-              if (localFlag === "true") {
-                profile.has_used_free_trial = true;
-                supabase
-                  .from("profiles")
-                  .update({ has_used_free_trial: true })
-                  .eq("id", session.user.id)
-                  .then(() => AsyncStorage.removeItem(FREE_TRIAL_KEY));
-              }
-            }
-
-            setUser(mapProfileToUser(profile, session.user.email));
-            setSettingsFromProfile(extractSettingsFromProfile(profile));
-          });
-      }
+      if (session) syncSessionUser(session);
       setLoading(false);
       setIsLoading(false);
       hideSplashWhenHydrated();
@@ -157,19 +157,7 @@ export default function RootLayout() {
         resetSubscription();
         return;
       }
-
-      loginUser(session.user.id).then(() => checkSubscription());
-
-      supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single()
-        .then(({ data: profile }) => {
-          if (!profile) return;
-          setUser(mapProfileToUser(profile, session.user.email));
-          setSettingsFromProfile(extractSettingsFromProfile(profile));
-        });
+      syncSessionUser(session);
     });
 
     return () => {
