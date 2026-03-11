@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
-import { supabase } from "@/services/supabase/client";
+import { supabase, getAuthHeaders } from "@/services/supabase/client";
 
 function SettingsRow({
   label,
@@ -40,6 +40,47 @@ export default function ProfileScreen() {
   const { targetExamLevel, targetExamDate, dailyPracticeGoal } = useSettingsStore();
   const { user, isAuthenticated } = useAuthStore();
   const { isPremium, customerInfo } = useSubscriptionStore();
+
+  const handleDeleteAccount = () => {
+    const subWarning = isPremium
+      ? "\n\nYou have an active subscription. Deleting your account will NOT cancel it - you must cancel separately in Settings > Subscriptions to stop being charged."
+      : "";
+
+    Alert.alert(
+      "Delete Account",
+      `This will permanently delete your account and all your data. This cannot be undone.${subWarning}`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => Alert.alert(
+            "Are you absolutely sure?",
+            `All your exam history, progress, and achievements will be lost forever.${isPremium ? " Remember to cancel your subscription in Apple Settings." : ""}`,
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Yes, delete my account",
+                style: "destructive",
+                onPress: async () => {
+                  try {
+                    const { error } = await supabase.functions.invoke('delete-account', {
+                      headers: await getAuthHeaders(),
+                    });
+                    if (error) throw error;
+                    await supabase.auth.signOut();
+                  } catch (e: unknown) {
+                    const message = e instanceof Error ? e.message : "Failed to delete account. Please try again.";
+                    Alert.alert("Error", message);
+                  }
+                },
+              },
+            ]
+          ),
+        },
+      ]
+    );
+  };
 
   const subscriptionLabel = isPremium
     ? customerInfo?.entitlements.active?.premium?.productIdentifier ?? "Active"
@@ -177,44 +218,7 @@ export default function ProfileScreen() {
         {/* Delete Account */}
         {isAuthenticated && (
           <Pressable
-            onPress={() => Alert.alert(
-              "Delete Account",
-              "This will permanently delete your account and all your data. This cannot be undone."
-                + (isPremium ? "\n\nYou have an active subscription. Deleting your account will NOT cancel it - you must cancel separately in Settings > Subscriptions to stop being charged." : ""),
-              [
-                { text: "Cancel", style: "cancel" },
-                {
-                  text: "Delete",
-                  style: "destructive",
-                  onPress: () => Alert.alert(
-                    "Are you absolutely sure?",
-                    "All your exam history, progress, and achievements will be lost forever."
-                      + (isPremium ? " Remember to cancel your subscription in Apple Settings." : ""),
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Yes, delete my account",
-                        style: "destructive",
-                        onPress: async () => {
-                          try {
-                            const { data: { session } } = await supabase.auth.getSession();
-                            const { error } = await supabase.functions.invoke('delete-account', {
-                              ...(session?.access_token && {
-                                headers: { Authorization: `Bearer ${session.access_token}` },
-                              }),
-                            });
-                            if (error) throw error;
-                            await supabase.auth.signOut();
-                          } catch (e: any) {
-                            Alert.alert("Error", e.message || "Failed to delete account. Please try again.");
-                          }
-                        },
-                      },
-                    ]
-                  ),
-                },
-              ]
-            )}
+            onPress={handleDeleteAccount}
             className="border-2 border-red-200 rounded-lg py-3 mb-8"
           >
             <Text className="text-red-400 font-bold text-center">Delete Account</Text>

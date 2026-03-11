@@ -1,4 +1,4 @@
-import { supabase } from '../supabase/client';
+import { supabase, getAuthHeaders } from '../supabase/client';
 
 interface AgentSession {
   signedUrl: string;
@@ -10,13 +10,9 @@ interface AgentSession {
 }
 
 export async function getAgentSession(level: string, part3ContentId: string): Promise<AgentSession> {
-  const { data: { session } } = await supabase.auth.getSession();
-
   const { data, error } = await supabase.functions.invoke('voice-agent-session', {
     body: { level, part3ContentId },
-    ...(session?.access_token && {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    }),
+    headers: await getAuthHeaders(),
   });
 
   if (error) throw new Error(`Failed to get agent session: ${error.message}`);
@@ -24,13 +20,9 @@ export async function getAgentSession(level: string, part3ContentId: string): Pr
 }
 
 export async function gradeExam(sessionId: string, transcripts: Record<string, string>, level: string) {
-  const { data: { session } } = await supabase.auth.getSession();
-
   const { data, error } = await supabase.functions.invoke('exam-grade', {
     body: { sessionId, transcripts, level },
-    ...(session?.access_token && {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    }),
+    headers: await getAuthHeaders(),
   });
 
   if (error) throw new Error(`Grading failed: ${error.message}`);

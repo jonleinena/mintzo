@@ -16,27 +16,16 @@ Deno.serve(async (req: Request) => {
 
     const admin = createSupabaseAdmin();
 
-    // Revoke RevenueCat subscriber access so they don't retain premium
-    // after account deletion. This doesn't cancel the Apple subscription -
-    // the user must do that in Settings > Subscriptions.
+    // Revoke RevenueCat subscriber access concurrently with DB cleanup.
+    // This doesn't cancel the Apple subscription - the user must do that
+    // in Settings > Subscriptions.
     const rcApiKey = Deno.env.get('REVENUECAT_API_V1_KEY');
-    if (rcApiKey) {
-      try {
-        await fetch(
-          `https://api.revenuecat.com/v1/subscribers/${userId}`,
-          {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${rcApiKey}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        );
-      } catch (rcError) {
-        // Non-fatal: user data deletion should still proceed
-        console.error('RevenueCat subscriber delete failed:', rcError);
-      }
-    }
+    const rcPromise = rcApiKey
+      ? fetch(`https://api.revenuecat.com/v1/subscribers/${userId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${rcApiKey}`, 'Content-Type': 'application/json' },
+        }).catch((e) => console.error('RevenueCat subscriber delete failed:', e))
+      : Promise.resolve();
 
     // Delete exam_part_results via exam_sessions (no direct user_id column)
     const { data: sessions } = await admin
@@ -48,6 +37,8 @@ Deno.serve(async (req: Request) => {
       const sessionIds = sessions.map((s) => s.id);
       await admin.from('exam_part_results').delete().in('session_id', sessionIds);
     }
+
+    await rcPromise;
 
     // Delete all user-owned rows from tables with user_id column
     await Promise.all([

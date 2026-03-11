@@ -12,3 +12,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+/**
+ * Get auth headers for edge function invocations.
+ * Returns an object with Authorization header if a session exists, or empty object.
+ */
+export async function getAuthHeaders(): Promise<{ Authorization: string } | undefined> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+  return undefined;
+}
