@@ -168,9 +168,56 @@ export default function ProfileScreen() {
               { text: "Cancel", style: "cancel" },
               { text: "Sign Out", style: "destructive", onPress: () => supabase.auth.signOut() },
             ])}
-            className="border-2 border-red-400 rounded-lg py-3 mb-8"
+            className="border-2 border-red-400 rounded-lg py-3 mb-4"
           >
             <Text className="text-red-500 font-bold text-center">Sign Out</Text>
+          </Pressable>
+        )}
+
+        {/* Delete Account */}
+        {isAuthenticated && (
+          <Pressable
+            onPress={() => Alert.alert(
+              "Delete Account",
+              "This will permanently delete your account and all your data. This cannot be undone."
+                + (isPremium ? "\n\nYou have an active subscription. Deleting your account will NOT cancel it - you must cancel separately in Settings > Subscriptions to stop being charged." : ""),
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Delete",
+                  style: "destructive",
+                  onPress: () => Alert.alert(
+                    "Are you absolutely sure?",
+                    "All your exam history, progress, and achievements will be lost forever."
+                      + (isPremium ? " Remember to cancel your subscription in Apple Settings." : ""),
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Yes, delete my account",
+                        style: "destructive",
+                        onPress: async () => {
+                          try {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            const { error } = await supabase.functions.invoke('delete-account', {
+                              ...(session?.access_token && {
+                                headers: { Authorization: `Bearer ${session.access_token}` },
+                              }),
+                            });
+                            if (error) throw error;
+                            await supabase.auth.signOut();
+                          } catch (e: any) {
+                            Alert.alert("Error", e.message || "Failed to delete account. Please try again.");
+                          }
+                        },
+                      },
+                    ]
+                  ),
+                },
+              ]
+            )}
+            className="border-2 border-red-200 rounded-lg py-3 mb-8"
+          >
+            <Text className="text-red-400 font-bold text-center">Delete Account</Text>
           </Pressable>
         )}
 
