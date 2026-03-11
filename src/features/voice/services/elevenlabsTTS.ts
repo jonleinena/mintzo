@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import { File, Paths } from 'expo-file-system';
-import { supabase } from '@/services/supabase/client';
+import { supabase, getAuthHeaders } from '@/services/supabase/client';
 import type { ExamLevel, ExamPart } from '@/types/exam';
 import { ensureElevenLabsKey, ELEVENLABS_API_KEY, API_BASE } from './elevenLabsConfig';
 
@@ -115,8 +115,8 @@ export async function uploadToCache(
   localAudioPath: string
 ): Promise<string | null> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
+    const headers = await getAuthHeaders();
+    if (!headers) {
       console.warn('Cache upload skipped: no active session');
       return null;
     }
@@ -126,7 +126,7 @@ export async function uploadToCache(
 
     const { data, error } = await supabase.functions.invoke('cache-audio', {
       body: { questionId, level, part, audioBase64: base64Audio },
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers,
     });
 
     if (error) {
